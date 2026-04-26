@@ -28,6 +28,10 @@ function formatMaybe(n: number | null) {
   return String(n);
 }
 
+function parseCountOrZero(raw: string, max: number) {
+  return Math.min(max, Math.max(0, parseInt(raw, 10) || 0));
+}
+
 export function RoundPanel({ round, state, onPatch }: Props) {
   const takes = state.players.map((p) => getCell(state, round, p.id).taken);
   const allTakesIn = takes.every((t) => t !== null);
@@ -56,7 +60,7 @@ export function RoundPanel({ round, state, onPatch }: Props) {
               <th scope="col">입찰</th>
               <th scope="col">실제</th>
               <th scope="col" className="thBonus">
-                보너스
+                보너스/확장
               </th>
               <th scope="col" className="thPts">
                 점수
@@ -137,17 +141,93 @@ function Row({ player, round, state, onPatch }: RowP) {
               <span>인어→스컬킹</span>
             </label>
             <label className="inlineN">
-              <span className="pirateLabel">해적</span>
+              <span className="pirateLabel">해적→인어</span>
               <input
                 className="pirateIn"
                 type="number"
                 min={0}
-                max={14}
+                max={2}
+                aria-label={`${player.name} 해적으로 잡은 인어 수`}
+                value={cell.piratesCatchMermaids}
+                onChange={(e) => {
+                  onPatch({ piratesCatchMermaids: parseCountOrZero(e.target.value, 2) });
+                }}
+                disabled={cell.bid === null || cell.bid < 1}
+              />
+            </label>
+            <label className="inlineN">
+              <span className="pirateLabel">스컬킹→해적</span>
+              <input
+                className="pirateIn"
+                type="number"
+                min={0}
+                max={6}
                 aria-label={`${player.name} 스컬킹으로 잡은 해적 수`}
                 value={cell.skullKingPiratesCaught}
                 onChange={(e) => {
-                  const n = Math.max(0, parseInt(e.target.value, 10) || 0);
-                  onPatch({ skullKingPiratesCaught: n });
+                  onPatch({ skullKingPiratesCaught: parseCountOrZero(e.target.value, 6) });
+                }}
+                disabled={cell.bid === null || cell.bid < 1}
+              />
+            </label>
+            <label className="inlineN">
+              <span className="pirateLabel">일반14</span>
+              <input
+                className="pirateIn"
+                type="number"
+                min={0}
+                max={3}
+                aria-label={`${player.name} 잡은 일반 14 수`}
+                value={cell.standard14sCaptured}
+                onChange={(e) => {
+                  onPatch({ standard14sCaptured: parseCountOrZero(e.target.value, 3) });
+                }}
+                disabled={cell.bid === null || cell.bid < 1}
+              />
+            </label>
+            <label className="inlineN">
+              <span className="pirateLabel">검정14</span>
+              <input
+                className="pirateIn"
+                type="number"
+                min={0}
+                max={1}
+                aria-label={`${player.name} 잡은 검정 14 수`}
+                value={cell.black14sCaptured}
+                onChange={(e) => {
+                  onPatch({ black14sCaptured: parseCountOrZero(e.target.value, 1) });
+                }}
+                disabled={cell.bid === null || cell.bid < 1}
+              />
+            </label>
+            <label className="inlineN">
+              <span className="pirateLabel">Loot</span>
+              <input
+                className="pirateIn"
+                type="number"
+                min={0}
+                max={2}
+                aria-label={`${player.name} Loot 동맹 보너스 횟수`}
+                value={cell.lootAlliances}
+                onChange={(e) => {
+                  onPatch({ lootAlliances: parseCountOrZero(e.target.value, 2) });
+                }}
+                disabled={cell.bid === null || cell.bid < 1}
+              />
+            </label>
+            <label className="inlineN">
+              <span className="pirateLabel">Rascal</span>
+              <input
+                className="pirateIn"
+                type="number"
+                min={0}
+                max={20}
+                step={10}
+                aria-label={`${player.name} Rascal wager 점수`}
+                value={cell.rascalWager}
+                onChange={(e) => {
+                  const next = parseCountOrZero(e.target.value, 20);
+                  onPatch({ rascalWager: Math.floor(next / 10) * 10 });
                 }}
                 disabled={cell.bid === null || cell.bid < 1}
               />

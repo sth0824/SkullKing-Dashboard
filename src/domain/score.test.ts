@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
+  BONUS_PER_BLACK_14,
+  BONUS_PER_LOOT_ALLIANCE,
+  BONUS_PER_MERMAID_CAUGHT_BY_PIRATE,
   BONUS_MERMAID_CATCHES_SKULL_KING,
   BONUS_PER_PIRATE_CAUGHT
 } from './constants';
@@ -9,7 +12,12 @@ const base = (over: Partial<RoundInput> = {}): RoundInput => ({
   bid: 1,
   taken: 1,
   mermaidCatchesSkullKing: false,
+  piratesCatchMermaids: 0,
   skullKingPiratesCaught: 0,
+  standard14sCaptured: 0,
+  black14sCaptured: 0,
+  lootAlliances: 0,
+  rascalWager: 0,
   manualOverridePoints: null,
   ...over
 });
@@ -44,6 +52,37 @@ describe('calcRoundPoints', () => {
     expect(r.total).toBe(
       2 * 20 + BONUS_MERMAID_CATCHES_SKULL_KING + 2 * BONUS_PER_PIRATE_CAUGHT
     );
+  });
+
+  it('확장 보너스(해적→인어, 14, Loot) 합산', () => {
+    const r = calcRoundPoints(
+      6,
+      base({
+        bid: 3,
+        taken: 3,
+        piratesCatchMermaids: 1,
+        standard14sCaptured: 2,
+        black14sCaptured: 1,
+        lootAlliances: 1
+      })
+    );
+    expect(r.total).toBe(
+      3 * 20 +
+        BONUS_PER_MERMAID_CAUGHT_BY_PIRATE +
+        2 * 10 +
+        BONUS_PER_BLACK_14 +
+        BONUS_PER_LOOT_ALLIANCE
+    );
+  });
+
+  it('Rascal wager는 성공 시 가산', () => {
+    const r = calcRoundPoints(4, base({ bid: 1, taken: 1, rascalWager: 20 }));
+    expect(r.total).toBe(40);
+  });
+
+  it('Rascal wager는 실패 시 감산', () => {
+    const r = calcRoundPoints(4, base({ bid: 1, taken: 2, rascalWager: 20 }));
+    expect(r.total).toBe(-30);
   });
 
   it('불일치 시 |차이|×10 감점(입3 실4 → -10)', () => {

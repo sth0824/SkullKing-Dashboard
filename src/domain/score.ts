@@ -1,6 +1,10 @@
 import {
+  BONUS_PER_BLACK_14,
+  BONUS_PER_LOOT_ALLIANCE,
+  BONUS_PER_MERMAID_CAUGHT_BY_PIRATE,
   BONUS_MERMAID_CATCHES_SKULL_KING,
   BONUS_PER_PIRATE_CAUGHT,
+  BONUS_PER_STANDARD_14,
   PENALTY_PER_TRICK,
   POINTS_PER_TRICK,
   ZERO_BID_MULTIPLIER
@@ -14,8 +18,21 @@ export type RoundInput = {
   taken: number | null;
   /** 인어가 스컬킹을 잡은 보너스(입찰이 정확할 때만 적용) */
   mermaidCatchesSkullKing: boolean;
+  /** 해적으로 잡은 인어 수(입찰이 정확할 때만 적용) */
+  piratesCatchMermaids: number;
   /** 스컬킹으로 잡은 해적 수(입찰이 정확할 때만 적용) */
   skullKingPiratesCaught: number;
+  /** 잡은 일반 14 수(초록/보라/노랑 합계, 입찰이 정확할 때만 적용) */
+  standard14sCaptured: number;
+  /** 잡은 검정 14 수(입찰이 정확할 때만 적용) */
+  black14sCaptured: number;
+  /** Loot 동맹 보너스 횟수(입찰이 정확할 때만 적용) */
+  lootAlliances: number;
+  /**
+   * Rascal wager 보정 점수입니다.
+   * 입찰이 정확하면 +값, 실패하면 -값으로 자동 처리합니다.
+   */
+  rascalWager: number;
   /**
    * 자동 계산을 무시하고 이 라운드 총점을 직접 지정합니다(특수 상황·하우스 룰).
    * 숫자로 설정돼 있으면 다른 자동 점수 필드는 무시합니다.
@@ -83,16 +100,32 @@ export function calcRoundPoints(
   if (bid === taken) {
     const base = bid * POINTS_PER_TRICK;
     const bonusMermaid = input.mermaidCatchesSkullKing ? BONUS_MERMAID_CATCHES_SKULL_KING : 0;
+    const bonusPirateMermaids =
+      Math.max(0, input.piratesCatchMermaids) * BONUS_PER_MERMAID_CAUGHT_BY_PIRATE;
     const bonusPirates = Math.max(0, input.skullKingPiratesCaught) * BONUS_PER_PIRATE_CAUGHT;
+    const bonusStandard14 = Math.max(0, input.standard14sCaptured) * BONUS_PER_STANDARD_14;
+    const bonusBlack14 = Math.max(0, input.black14sCaptured) * BONUS_PER_BLACK_14;
+    const bonusLoot = Math.max(0, input.lootAlliances) * BONUS_PER_LOOT_ALLIANCE;
+    const rascal = Math.max(0, input.rascalWager);
     return {
-      total: base + bonusMermaid + bonusPirates,
+      total:
+        base +
+        bonusMermaid +
+        bonusPirateMermaids +
+        bonusPirates +
+        bonusStandard14 +
+        bonusBlack14 +
+        bonusLoot +
+        rascal,
       baseRule: 'standard',
       usedManual: false
     };
   }
 
+  const mismatchPenalty = -Math.abs(bid - taken) * PENALTY_PER_TRICK;
+  const rascalPenalty = -Math.max(0, input.rascalWager);
   return {
-    total: -Math.abs(bid - taken) * PENALTY_PER_TRICK,
+    total: mismatchPenalty + rascalPenalty,
     baseRule: 'standard',
     usedManual: false
   };

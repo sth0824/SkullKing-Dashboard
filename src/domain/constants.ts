@@ -2,10 +2,18 @@
 export const POINTS_PER_TRICK = 20;
 /** 입찰 실패 시 |차이| 1마다 감점 */
 export const PENALTY_PER_TRICK = 10;
-/** 인어가 스컬킹을 잡은 경우(입찰 정확 + 보너스 on) */
-export const BONUS_MERMAID_CATCHES_SKULL_KING = 50;
+/** 인어가 스컬킹을 잡은 경우 보너스입니다. */
+export const BONUS_MERMAID_CATCHES_SKULL_KING = 40;
+/** 해적으로 인어를 잡은 장수당 보너스입니다. */
+export const BONUS_PER_MERMAID_CAUGHT_BY_PIRATE = 20;
 /** 스컬킹으로 잡은 해적 카드 1장당(입찰 정확 시) */
 export const BONUS_PER_PIRATE_CAUGHT = 30;
+/** 일반 14(노랑/보라/초록) 한 장당 보너스입니다. */
+export const BONUS_PER_STANDARD_14 = 10;
+/** 검정 14 한 장당 보너스입니다. */
+export const BONUS_PER_BLACK_14 = 20;
+/** Loot 동맹 1회 성립 시 보너스입니다. */
+export const BONUS_PER_LOOT_ALLIANCE = 20;
 /** 0트릙 입찭 성공/실패 시 라운드마다 ×하는 배수 */
 export const ZERO_BID_MULTIPLIER = 10;
 /** localStorage 키 */

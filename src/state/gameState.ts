@@ -23,7 +23,12 @@ function emptyInput(): RoundInput {
     bid: null,
     taken: null,
     mermaidCatchesSkullKing: false,
+    piratesCatchMermaids: 0,
     skullKingPiratesCaught: 0,
+    standard14sCaptured: 0,
+    black14sCaptured: 0,
+    lootAlliances: 0,
+    rascalWager: 0,
     manualOverridePoints: null
   };
 }

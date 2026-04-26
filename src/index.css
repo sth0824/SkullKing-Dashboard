@@ -265,6 +265,12 @@ button:disabled {
   accent-color: var(--btn);
 }
 
+.inlineN {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .manualToggle {
   margin: 0;
   padding: 0;
