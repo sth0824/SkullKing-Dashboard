@@ -9,6 +9,9 @@ export function HelpModal({ open, onClose }: Props) {
         <h2 id="helpTitle" className="modalTitle">
           점수 규칙 요약
         </h2>
+        <p className="helpNote" style={{ marginTop: 0 }}>
+          사용 방법은 헤더의 <strong>📖 이용 안내</strong>를 눌러 주세요.
+        </p>
         <ul className="helpList">
           <li>0 입찰 성공(채점용 실제도 0): +라운드 × 10점</li>
           <li>0 입찰 실패(채점용 실제 ≠ 0): −라운드 × 10점</li>

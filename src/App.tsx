@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { buildPlayerTotal, calcRoundPoints } from './domain/score';
+import { GuideModal } from './components/GuideModal';
 import { HelpModal } from './components/HelpModal';
 import { RoundPanel } from './components/RoundPanel';
 import { SetupModal } from './components/SetupModal';
@@ -27,6 +28,7 @@ export default function App() {
   const [showSetup, setShowSetup] = useState(false);
   const [setupKey, setSetupKey] = useState(0);
   const [showHelp, setShowHelp] = useState(false);
+  const [showGuide, setShowGuide] = useState(false);
   const [showReset, setShowReset] = useState(false);
   const [showGameComplete, setShowGameComplete] = useState(false);
 
@@ -167,7 +169,16 @@ export default function App() {
             <button type="button" className="iconBtn" onClick={openSettings} aria-label="설정" title="설정">
               ⚙️
             </button>
-            <button type="button" className="iconBtn" onClick={() => setShowHelp(true)} aria-label="도움말" title="도움말">
+            <button
+              type="button"
+              className="iconBtn"
+              onClick={() => setShowGuide(true)}
+              aria-label="이용 안내"
+              title="이용 안내"
+            >
+              📖
+            </button>
+            <button type="button" className="iconBtn" onClick={() => setShowHelp(true)} aria-label="점수 규칙" title="점수 규칙">
               ?
             </button>
             <button
@@ -226,6 +237,7 @@ export default function App() {
       </main>
 
       {/* ── Modals ── */}
+      <GuideModal open={showGuide} onClose={() => setShowGuide(false)} />
       <HelpModal open={showHelp} onClose={() => setShowHelp(false)} />
 
       {showReset && (
