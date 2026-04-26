@@ -101,8 +101,10 @@ function Row({ player, round, state, onPatch }: RowP) {
 
   return (
     <tr>
-      <td className="tdName">{player.name}</td>
-      <td>
+      <td className="tdName" data-label="플레이어">
+        {player.name}
+      </td>
+      <td data-label="입찰">
         <input
           className="numIn"
           inputMode="numeric"
@@ -114,7 +116,7 @@ function Row({ player, round, state, onPatch }: RowP) {
           onChange={(e) => onPatch({ bid: parseIntOrNull(e.target.value) })}
         />
       </td>
-      <td>
+      <td data-label="실제">
         <input
           className="numIn"
           inputMode="numeric"
@@ -126,7 +128,7 @@ function Row({ player, round, state, onPatch }: RowP) {
           onChange={(e) => onPatch({ taken: parseIntOrNull(e.target.value) })}
         />
       </td>
-      <td className="tdBonus">
+      <td className="tdBonus" data-label="보너스/확장">
         {isManual ? (
           <span className="muted">수동</span>
         ) : (
@@ -261,7 +263,7 @@ function Row({ player, round, state, onPatch }: RowP) {
           />
         )}
       </td>
-      <td>
+      <td className="tdPts" data-label="점수">
         <span
           className={`ptCell ${br.total !== null && br.total < 0 ? 'ptNeg' : 'ptPos'}`}
         >

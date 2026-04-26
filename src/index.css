@@ -47,7 +47,7 @@ input {
 .app {
   max-width: 1100px;
   margin: 0 auto;
-  padding: 12px 12px 80px;
+  padding: 10px 10px 88px;
 }
 
 .header {
@@ -66,6 +66,10 @@ input {
   gap: 8px;
 }
 
+.headerRow > button {
+  flex: 1 1 calc(33.333% - 6px);
+}
+
 .main {
   display: flex;
   flex-direction: column;
@@ -77,8 +81,8 @@ input {
   position: sticky;
   top: 0;
   z-index: 4;
-  margin: 0 -8px 8px;
-  padding: 6px 8px;
+  margin: 0 -6px 8px;
+  padding: 6px 6px;
   background: linear-gradient(to bottom, #0b0f15, #0b0f1500);
   backdrop-filter: blur(4px);
 }
@@ -169,7 +173,7 @@ button:disabled {
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 10px;
-  padding: 2px 8px 8px;
+  padding: 2px 6px 8px;
 }
 
 .roundSummary {
@@ -207,15 +211,15 @@ button:disabled {
 
 .tableScroll {
   width: 100%;
-  overflow-x: auto;
+  overflow-x: clip;
   -webkit-overflow-scrolling: touch;
   border-radius: 8px;
-  border: 1px solid var(--line);
+  border: 0;
 }
 
 .roundTable {
   width: 100%;
-  min-width: 700px;
+  min-width: 100%;
   border-collapse: collapse;
   background: #141b22;
   font-size: 0.92rem;
@@ -240,6 +244,10 @@ button:disabled {
 
 .tdBonus {
   min-width: 180px;
+}
+
+.tdPts {
+  white-space: nowrap;
 }
 
 .bonusGroup {
@@ -269,6 +277,7 @@ button:disabled {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  min-height: 44px;
 }
 
 .manualToggle {
@@ -455,4 +464,87 @@ button:disabled {
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border: 0;
+}
+
+@media (max-width: 860px) {
+  .roundTable thead {
+    display: none;
+  }
+
+  .roundTable,
+  .roundTable tbody,
+  .roundTable tr,
+  .roundTable td {
+    display: block;
+    width: 100%;
+  }
+
+  .roundTable tr {
+    border: 1px solid #243041;
+    border-radius: 10px;
+    margin-bottom: 8px;
+    padding: 6px 8px;
+    background: #141b22;
+  }
+
+  .roundTable td {
+    border-bottom: 0;
+    padding: 6px 0;
+  }
+
+  .roundTable td::before {
+    content: attr(data-label);
+    display: block;
+    color: var(--muted);
+    font-size: 0.78rem;
+    margin-bottom: 4px;
+  }
+
+  .tdName {
+    font-size: 1rem;
+    padding-top: 2px;
+  }
+
+  .numIn,
+  .pirateIn,
+  .manualIn {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .bonusGroup {
+    gap: 6px 10px;
+  }
+
+  .inlineN {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .pirateLabel {
+    margin-right: 0;
+  }
+
+  .tdPts {
+    padding-top: 2px;
+  }
+
+  .ptCell {
+    font-size: 1.15rem;
+  }
+}
+
+@media (min-width: 861px) {
+  .headerRow > button {
+    flex: 0 0 auto;
+  }
+
+  .tableScroll {
+    overflow-x: auto;
+    border: 1px solid var(--line);
+  }
+
+  .roundTable {
+    min-width: 760px;
+  }
 }
