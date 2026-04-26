@@ -16,8 +16,8 @@ export type PersistedV1 = {
    * round 키는 "1".."N" 문자열
    */
   cells: Record<string, Record<string, RoundInput>>;
-  /** 라운드별 메타(크라켄 등). 키는 "1".."N" 문자열 */
-  roundFlags?: Record<string, { kraken?: boolean }>;
+  /** 라운드별 메타(크라켄, 완료 여부 등). 키는 "1".."N" 문자열 */
+  roundFlags?: Record<string, { kraken?: boolean; completed?: boolean }>;
 };
 
 function emptyInput(): RoundInput {
@@ -105,6 +105,32 @@ export function withRoundKraken(state: PersistedV1, round: number, kraken: boole
   };
 }
 
+// 라운드가 명시적으로 완료되었는지 조회합니다
+export function getRoundCompleted(state: PersistedV1, round: number): boolean {
+  return Boolean(state.roundFlags?.[String(round)]?.completed);
+}
+
+// 라운드 완료 플래그를 설정합니다
+export function withRoundCompleted(state: PersistedV1, round: number, completed: boolean): PersistedV1 {
+  const k = String(round);
+  return {
+    ...state,
+    roundFlags: {
+      ...(state.roundFlags ?? {}),
+      [k]: { ...(state.roundFlags?.[k] ?? {}), completed }
+    }
+  };
+}
+
+// 멤버·라운드 수는 유지하되 점수 데이터만 초기화합니다
+export function resetKeepPlayers(state: PersistedV1): PersistedV1 {
+  return {
+    ...state,
+    cells: {},
+    roundFlags: {}
+  };
+}
+
 export function loadFromStorage(): PersistedV1 {
   if (typeof localStorage === 'undefined') {
     return makeInitialState();
@@ -146,7 +172,7 @@ export function mergePlayersAndRounds(
   roundCount: number
 ): PersistedV1 {
   const cells: Record<string, Record<string, RoundInput>> = {};
-  const roundFlags: Record<string, { kraken?: boolean }> = {};
+  const roundFlags: Record<string, { kraken?: boolean; completed?: boolean }> = {};
   for (let r = 1; r <= roundCount; r += 1) {
     const k = String(r);
     const row: Record<string, RoundInput> = {};

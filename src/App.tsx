@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { buildPlayerTotal, calcRoundPoints } from './domain/score';
+import { buildPlayerTotal, calcRoundPoints, isRoundTakeSumValid } from './domain/score';
+import { DEFAULT_ROUNDS } from './domain/constants';
 import { GuideModal } from './components/GuideModal';
 import { HelpModal } from './components/HelpModal';
 import { RoundPanel } from './components/RoundPanel';
@@ -11,8 +12,10 @@ import {
   loadFromStorage,
   makeInitialState,
   mergePlayersAndRounds,
+  resetKeepPlayers,
   saveToStorage,
   withCell,
+  withRoundCompleted,
   withRoundKraken,
   type PersistedV1,
   type Player,
@@ -75,19 +78,10 @@ export default function App() {
     return info;
   }, [state]);
 
-  const allRoundsComplete = useMemo(
-    () =>
-      state.roundCount > 0 &&
-      Array.from({ length: state.roundCount }, (_, i) => i + 1).every(
-        (r) => roundInfo[r]?.complete,
-      ),
-    [roundInfo, state.roundCount],
-  );
-
-  // Auto-advance to next round when a round is newly completed
+  // Auto-advance to next round when a round is newly completed (입찰+실제 트릭 입력 감지)
   useEffect(() => {
     if (!isInitializedRef.current) {
-      // First mount: mark all currently-complete rounds as already-complete
+      // 첫 마운트 시 이미 완료된 라운드를 기록합니다
       isInitializedRef.current = true;
       for (let r = 1; r <= state.roundCount; r++) {
         if (roundInfo[r]?.complete) wasCompleteRef.current.add(r);
@@ -106,26 +100,17 @@ export default function App() {
             const next = r + 1;
             if (next <= state.roundCount && detailsRefs.current[next]) {
               detailsRefs.current[next]!.open = true;
-              // Scroll to next round
               detailsRefs.current[next]?.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
           }, 600);
         }
-        break; // Handle one newly-complete round per effect run
+        break;
       }
     }
     return () => {
       if (advanceTimerRef.current) clearTimeout(advanceTimerRef.current);
     };
   }, [roundInfo, state.roundCount]);
-
-  // Show game complete modal when all rounds done
-  useEffect(() => {
-    if (allRoundsComplete) {
-      const t = setTimeout(() => setShowGameComplete(true), 800);
-      return () => clearTimeout(t);
-    }
-  }, [allRoundsComplete]);
 
   const openSettings = useCallback(() => {
     setSetupKey((k) => k + 1);
@@ -145,8 +130,62 @@ export default function App() {
     isInitializedRef.current = false;
   }, []);
 
+  // 멤버·라운드 수는 유지하고 점수만 초기화합니다
+  const resetKeepPlayersCallback = useCallback(() => {
+    setState((s) => resetKeepPlayers(s));
+    setShowGameComplete(false);
+    wasCompleteRef.current = new Set();
+    isInitializedRef.current = false;
+  }, []);
+
   const onPatch = useCallback((round: number, playerId: string, patch: Partial<RoundInput>) => {
     setState((s) => withCell(s, round, playerId, patch));
+  }, []);
+
+  // 라운드 완료 버튼 핸들러: 승수 검증 후 다음 라운드로 이동하거나 게임을 종료합니다
+  const handleRoundComplete = useCallback((round: number) => {
+    const currentState = state;
+    const kraken = getRoundKraken(currentState, round);
+    const takes = currentState.players.map((p) => {
+      const t = getCell(currentState, round, p.id).taken;
+      return t ?? 0;
+    });
+    const allTakesIn = currentState.players.every(
+      (p) => getCell(currentState, round, p.id).taken !== null
+    );
+
+    if (allTakesIn) {
+      const { ok } = isRoundTakeSumValid(round, takes);
+      if (!ok && !kraken) {
+        // 승수 불일치 시 확인 팝업을 표시합니다
+        const proceed = window.confirm(
+          `⚠️ 승수가 일치하지 않습니다.\n승수 및 크라켄 여부를 확인해주세요.\n\n그래도 다음으로 넘어갈까요?`
+        );
+        if (!proceed) return;
+      }
+    }
+
+    setState((s) => withRoundCompleted(s, round, true));
+
+    if (round >= currentState.roundCount) {
+      // 마지막 라운드 완료 → 최종 순위 표시
+      setShowGameComplete(true);
+    } else {
+      // 다음 라운드를 열고 스크롤합니다
+      const next = round + 1;
+      setTimeout(() => {
+        if (detailsRefs.current[round]) detailsRefs.current[round]!.open = false;
+        if (detailsRefs.current[next]) {
+          detailsRefs.current[next]!.open = true;
+          detailsRefs.current[next]?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 100);
+    }
+  }, [state]);
+
+  // END 버튼 핸들러: 현재까지 점수로 즉시 최종 순위를 표시합니다
+  const handleEndGame = useCallback(() => {
+    setShowGameComplete(true);
   }, []);
 
   // Final standings for game complete modal
@@ -230,10 +269,34 @@ export default function App() {
                 kraken={getRoundKraken(state, r)}
                 onKrakenChange={(v) => setState((s) => withRoundKraken(s, r, v))}
                 onPatch={(pid, patch) => onPatch(r, pid, patch)}
+                onComplete={() => handleRoundComplete(r)}
+                isLastRound={r >= state.roundCount}
+                canEnd={r >= 6}
+                onEnd={handleEndGame}
               />
             </details>
           );
         })}
+
+        {/* 10라운드 이상일 때 라운드 추가 또는 게임 종료 버튼을 표시합니다 */}
+        {state.roundCount >= DEFAULT_ROUNDS && (
+          <div className="roundExtendBar">
+            <button
+              type="button"
+              className="btnExtend"
+              onClick={() => setState((s) => ({ ...s, roundCount: s.roundCount + 1 }))}
+            >
+              + 라운드 추가
+            </button>
+            <button
+              type="button"
+              className="btnEndGame"
+              onClick={handleEndGame}
+            >
+              🏴‍☠️ 게임 끝내기
+            </button>
+          </div>
+        )}
       </main>
 
       {/* ── Modals ── */}
@@ -288,9 +351,16 @@ export default function App() {
                 </li>
               ))}
             </ol>
-            <div className="rowEnd" style={{ marginTop: 20 }}>
+            <div className="gcActions">
               <button type="button" className="btnGhost" onClick={() => setShowGameComplete(false)}>
                 닫기
+              </button>
+              <button
+                type="button"
+                className="btnPrimary"
+                onClick={resetKeepPlayersCallback}
+              >
+                같은 멤버로 다시
               </button>
               <button
                 type="button"

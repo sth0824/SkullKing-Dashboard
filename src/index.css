@@ -397,6 +397,20 @@ details[open] > .roundSummary .roundChevron {
   margin-top: 4px;
 }
 
+.bonusExtraStepperWrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 6px;
+}
+
+.bonusExtraVal {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text2);
+  min-width: 48px;
+}
+
 /* ── Player card ────────────────────────────────────────── */
 .playerCard {
   border: 1px solid var(--line);
@@ -1149,6 +1163,128 @@ button:disabled {
   font-size: 1.2rem;
   letter-spacing: -0.02em;
   flex-shrink: 0;
+}
+
+/* ── Round action row (complete / END buttons) ──────────── */
+.roundActionRow {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 14px 0 2px;
+  margin-top: 8px;
+  border-top: 1px solid var(--line);
+}
+
+/* 라운드 완료 버튼 */
+.btnComplete {
+  flex: 1;
+  min-height: 48px;
+  padding: 0 18px;
+  border-radius: var(--r-sm);
+  border: 1px solid rgba(32, 112, 191, 0.4);
+  background: linear-gradient(to bottom, var(--btn-h), var(--btn));
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.97rem;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(26, 95, 168, 0.25);
+  transition: background 0.12s, box-shadow 0.12s;
+}
+
+.btnComplete:active {
+  background: var(--btn);
+  box-shadow: none;
+}
+
+.btnComplete:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* END 버튼 (6라운드 이상) */
+.btnEnd {
+  min-height: 48px;
+  padding: 0 16px;
+  border-radius: var(--r-sm);
+  border: 1px solid rgba(136, 34, 34, 0.4);
+  background: linear-gradient(to bottom, var(--danger-h), var(--danger));
+  color: #ffd8d8;
+  font-weight: 800;
+  font-size: 0.9rem;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: background 0.12s;
+  flex-shrink: 0;
+}
+
+.btnEnd:active {
+  background: var(--danger);
+}
+
+/* ── Round extend bar (10라운드 이후) ───────────────────── */
+.roundExtendBar {
+  display: flex;
+  gap: 10px;
+  padding: 14px 16px;
+  background: var(--surface2);
+  border: 1px dashed var(--line2);
+  border-radius: var(--r-sm);
+  margin: 10px 0 6px;
+}
+
+/* +라운드 추가 버튼 */
+.btnExtend {
+  flex: 1;
+  min-height: 48px;
+  padding: 0 14px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--line2);
+  background: var(--surface3, var(--surface2));
+  color: var(--text);
+  font-weight: 700;
+  font-size: 0.92rem;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.btnExtend:active {
+  background: var(--line2);
+}
+
+/* 게임 끝내기 버튼 */
+.btnEndGame {
+  flex: 1;
+  min-height: 48px;
+  padding: 0 14px;
+  border-radius: var(--r-sm);
+  border: 1px solid rgba(136, 34, 34, 0.4);
+  background: linear-gradient(to bottom, var(--danger-h), var(--danger));
+  color: #ffd8d8;
+  font-weight: 700;
+  font-size: 0.92rem;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.btnEndGame:active {
+  background: var(--danger);
+}
+
+/* ── Game complete modal actions ─────────────────────────── */
+.gcActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.gcActions .btnGhost,
+.gcActions .btnPrimary,
+.gcActions .btnDanger {
+  flex: 1;
+  min-width: 100px;
 }
 
 /* ── Utilities ──────────────────────────────────────────── */

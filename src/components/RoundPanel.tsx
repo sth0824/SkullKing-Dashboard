@@ -9,6 +9,14 @@ type Props = {
   kraken: boolean;
   onKrakenChange: (kraken: boolean) => void;
   onPatch: (playerId: string, patch: Partial<RoundInput>) => void;
+  /** 라운드 완료 버튼 클릭 시 호출됩니다. */
+  onComplete: () => void;
+  /** 마지막 라운드면 버튼 레이블을 '게임 종료'로 표시합니다. */
+  isLastRound: boolean;
+  /** 6라운드 이상이면 END 버튼을 노출합니다. */
+  canEnd: boolean;
+  /** END 버튼 클릭 시 호출됩니다. */
+  onEnd: () => void;
 };
 
 function formatMaybe(n: number | null) {
@@ -22,6 +30,7 @@ type StepperProps = {
   value: number | null;
   min?: number;
   max: number;
+  step?: number;
   onChange: (v: number | null) => void;
   disabled?: boolean;
   size?: 'lg' | 'md';
@@ -33,6 +42,7 @@ function Stepper({
   value,
   min = 0,
   max,
+  step = 1,
   onChange,
   disabled = false,
   size = 'md',
@@ -42,12 +52,12 @@ function Stepper({
   const handleDec = () => {
     if (value === null) return;
     if (nullable && value === min) onChange(null);
-    else onChange(Math.max(min, value - 1));
+    else onChange(Math.max(min, value - step));
   };
 
   const handleInc = () => {
     if (value === null) onChange(min);
-    else onChange(Math.min(max, value + 1));
+    else onChange(Math.min(max, value + step));
   };
 
   return (
@@ -103,9 +113,23 @@ function RascalPicker({ value, disabled, onChange }: RascalPickerProps) {
 }
 
 // ── RoundPanel ───────────────────────────────────────────
-export function RoundPanel({ round, state, kraken, onKrakenChange, onPatch }: Props) {
+export function RoundPanel({
+  round,
+  state,
+  kraken,
+  onKrakenChange,
+  onPatch,
+  onComplete,
+  isLastRound,
+  canEnd,
+  onEnd,
+}: Props) {
   const takes = state.players.map((p) => getCell(state, round, p.id).taken);
   const allTakesIn = takes.every((t) => t !== null);
+  const allBidsIn = state.players.every((p) => getCell(state, round, p.id).bid !== null);
+  // 입찰+실제 트릭 모두 입력된 경우에만 완료 버튼을 활성화합니다
+  const canComplete = allTakesIn && allBidsIn;
+
   const { ok, sum } = allTakesIn
     ? isRoundTakeSumValid(round, takes.map((t) => t as number))
     : { ok: true, sum: 0 };
@@ -142,6 +166,28 @@ export function RoundPanel({ round, state, kraken, onKrakenChange, onPatch }: Pr
           onPatch={(patch) => onPatch(p.id, patch)}
         />
       ))}
+
+      {/* 라운드 완료 버튼 영역 */}
+      <div className="roundActionRow">
+        {canEnd && (
+          <button
+            type="button"
+            className="btnEnd"
+            onClick={onEnd}
+            title="현재까지 점수로 게임 종료"
+          >
+            END
+          </button>
+        )}
+        <button
+          type="button"
+          className="btnComplete"
+          disabled={!canComplete}
+          onClick={onComplete}
+        >
+          {isLastRound ? '🏴‍☠️ 게임 종료' : '라운드 완료 →'}
+        </button>
+      </div>
     </div>
   );
 }
@@ -258,27 +304,29 @@ function PlayerCard({ player, round, state, onPatch }: CardProps) {
 
             {bonusOpen && (
               <div className="bonusGrid">
-                {/* 임의 카드 보너스 (1+ 입찰 성공 시만 합산) */}
+                {/* 추가/차감 점수 — 5점 단위 스테퍼 (1+ 입찰 성공 시만 합산) */}
                 <div className="bonusRow bonusRow--col">
                   <span className={`bonusRowLabel${bonusDisabled ? ' bonusRowLabel--disabled' : ''}`}>
-                    추가 보너스 점수
-                    <small>+10, −5 등 (1+ 입찰 성공 시만)</small>
+                    추가/차감 점수
+                    <small>+5 / −5 단위 (1+ 입찰 성공 시만 합산)</small>
                   </span>
-                  <input
-                    className="manualInput bonusExtraInput"
-                    type="number"
-                    inputMode="numeric"
-                    disabled={bonusDisabled}
-                    value={cell.extraBonusPoints ?? 0}
-                    onChange={(e) => {
-                      const n = Math.round(Number(e.target.value));
-                      onPatch({
-                        extraBonusPoints: Number.isNaN(n)
-                          ? 0
-                          : Math.min(9999, Math.max(-9999, n))
-                      });
-                    }}
-                  />
+                  <div className="bonusExtraStepperWrap">
+                    <Stepper
+                      value={cell.extraBonusPoints ?? 0}
+                      min={-500}
+                      max={500}
+                      step={5}
+                      disabled={bonusDisabled}
+                      size="md"
+                      onChange={(v) => onPatch({ extraBonusPoints: v ?? 0 })}
+                    />
+                    <span className="bonusExtraVal">
+                      {(cell.extraBonusPoints ?? 0) > 0
+                        ? `+${cell.extraBonusPoints}`
+                        : String(cell.extraBonusPoints ?? 0)}
+                      pt
+                    </span>
+                  </div>
                 </div>
 
                 {/* 1등 항해사 */}
