@@ -1,7 +1,14 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "mcp__Claude_Preview__preview_start",
+      "WebSearch",
+      "WebFetch(domain:www.grandpabecksgames.com)",
+      "WebFetch(domain:manuals.plus)",
+      "WebFetch(domain:en.boardgamearena.com)",
+      "WebFetch(domain:fgbradleys.com)",
+      "WebFetch(domain:en.doc.boardgamearena.com)"
     ]
   }
 }

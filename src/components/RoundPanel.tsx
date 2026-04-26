@@ -14,6 +14,7 @@ function formatMaybe(n: number | null) {
   return String(n);
 }
 
+// ── Stepper ─────────────────────────────────────────────
 type StepperProps = {
   value: number | null;
   min?: number;
@@ -46,16 +47,13 @@ function Stepper({
     else onChange(Math.min(max, value + 1));
   };
 
-  const canDec = !disabled && value !== null;
-  const canInc = !disabled && (value === null || value < max);
-
   return (
     <div className={`stepper stepper--${size}${className ? ` ${className}` : ''}`}>
       <button
         type="button"
         className="stepperBtn"
         onClick={handleDec}
-        disabled={!canDec}
+        disabled={disabled || value === null}
         aria-label="감소"
       >
         −
@@ -67,7 +65,7 @@ function Stepper({
         type="button"
         className="stepperBtn"
         onClick={handleInc}
-        disabled={!canInc}
+        disabled={disabled || value === max}
         aria-label="증가"
       >
         +
@@ -76,14 +74,37 @@ function Stepper({
   );
 }
 
+// ── Rascal segment picker (0 / 10pt / 20pt) ─────────────
+type RascalPickerProps = {
+  value: number;
+  disabled: boolean;
+  onChange: (v: number) => void;
+};
+
+function RascalPicker({ value, disabled, onChange }: RascalPickerProps) {
+  return (
+    <div className="rascalPicker">
+      {([0, 10, 20] as const).map((pt) => (
+        <button
+          key={pt}
+          type="button"
+          className={`rascalOpt${value === pt ? ' rascalOpt--active' : ''}`}
+          disabled={disabled}
+          onClick={() => onChange(pt)}
+        >
+          {pt === 0 ? '없음' : `${pt}pt`}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// ── RoundPanel ───────────────────────────────────────────
 export function RoundPanel({ round, state, onPatch }: Props) {
   const takes = state.players.map((p) => getCell(state, round, p.id).taken);
   const allTakesIn = takes.every((t) => t !== null);
   const { ok, sum } = allTakesIn
-    ? isRoundTakeSumValid(
-        round,
-        takes.map((t) => t as number),
-      )
+    ? isRoundTakeSumValid(round, takes.map((t) => t as number))
     : { ok: true, sum: 0 };
   const showTakeWarning = allTakesIn && !ok;
 
@@ -107,6 +128,7 @@ export function RoundPanel({ round, state, onPatch }: Props) {
   );
 }
 
+// ── PlayerCard ───────────────────────────────────────────
 type CardProps = {
   player: Player;
   round: number;
@@ -121,20 +143,37 @@ function PlayerCard({ player, round, state, onPatch }: CardProps) {
   const bonusDisabled = cell.bid === null || cell.bid < 1;
   const [bonusOpen, setBonusOpen] = useState(false);
 
-  const scoreClass =
-    br.total === null ? 'ptNull' : br.total < 0 ? 'ptNeg' : 'ptPos';
+  const scoreClass = br.total === null ? 'ptNull' : br.total < 0 ? 'ptNeg' : 'ptPos';
+  const cardStateClass =
+    br.total === null ? '' : br.total > 0 ? ' playerCard--pos' : br.total < 0 ? ' playerCard--neg' : '';
+  const bothSet = cell.bid !== null && cell.taken !== null;
+  const bidRowClass = bothSet
+    ? cell.bid === cell.taken
+      ? ' bidTakenRow--ok'
+      : ' bidTakenRow--fail'
+    : '';
+
+  // Derived: any bonus is set (show indicator on collapsed button)
+  const hasBonus =
+    cell.mermaidCatchesSkullKing ||
+    cell.piratesCatchMermaids > 0 ||
+    cell.skullKingPiratesCaught > 0 ||
+    cell.standard14sCaptured > 0 ||
+    cell.black14sCaptured > 0 ||
+    cell.lootAlliances > 0 ||
+    cell.rascalWager > 0;
 
   return (
-    <div className="playerCard">
-      {/* ── Card header ── */}
+    <div className={`playerCard${cardStateClass}`}>
+      {/* Header */}
       <div className="playerCardHeader">
         <span className="playerCardName">{player.name}</span>
         <span className={`playerCardScore ${scoreClass}`}>{formatMaybe(br.total)}</span>
       </div>
 
       <div className="playerCardBody">
-        {/* ── Bid / Taken ── */}
-        <div className="bidTakenRow">
+        {/* Bid / Taken */}
+        <div className={`bidTakenRow${bidRowClass}`}>
           <div className="bidTakenItem">
             <span className="bidTakenLabel">입찰</span>
             <Stepper
@@ -157,27 +196,28 @@ function PlayerCard({ player, round, state, onPatch }: CardProps) {
           </div>
         </div>
 
-        {/* ── Bonus section ── */}
+        {/* Bonus section */}
         {!isManual && (
           <>
             <div className="cardDivider" />
-            <div className="bonusHeader">
-              <button
-                type="button"
-                className="bonusToggleBtn"
-                disabled={bonusDisabled}
-                onClick={() => setBonusOpen((v) => !v)}
-              >
-                <span>확장 보너스</span>
-                <span className={`bonusChevron${bonusOpen ? ' bonusChevron--open' : ''}`}>
-                  ▼
-                </span>
-              </button>
-            </div>
+            <button
+              type="button"
+              className="bonusToggleBtn"
+              disabled={bonusDisabled}
+              onClick={() => setBonusOpen((v) => !v)}
+            >
+              <span>
+                확장 보너스
+                {!bonusDisabled && hasBonus && !bonusOpen && (
+                  <span className="bonusDot" aria-label="보너스 입력됨" />
+                )}
+              </span>
+              <span className={`bonusChevron${bonusOpen ? ' bonusChevron--open' : ''}`}>▼</span>
+            </button>
 
             {bonusOpen && (
               <div className="bonusGrid">
-                {/* Mermaid catches Skull King */}
+                {/* Mermaid → Skull King */}
                 <div className="bonusRow">
                   <label className={`toggleSwitch${bonusDisabled ? ' toggleSwitch--disabled' : ''}`}>
                     <input
@@ -194,11 +234,11 @@ function PlayerCard({ player, round, state, onPatch }: CardProps) {
                   </label>
                 </div>
 
-                {/* Pirates catch Mermaids */}
+                {/* Pirates → Mermaids */}
                 <div className="bonusRow">
                   <span className={`bonusRowLabel${bonusDisabled ? ' bonusRowLabel--disabled' : ''}`}>
                     해적 → 인어
-                    <small>+20점 × 수</small>
+                    <small>+20점 × 수 (최대 2)</small>
                   </span>
                   <div className="bonusRowStepper">
                     <Stepper
@@ -210,11 +250,11 @@ function PlayerCard({ player, round, state, onPatch }: CardProps) {
                   </div>
                 </div>
 
-                {/* Skull King catches Pirates */}
+                {/* Skull King → Pirates */}
                 <div className="bonusRow">
                   <span className={`bonusRowLabel${bonusDisabled ? ' bonusRowLabel--disabled' : ''}`}>
                     스컬킹 → 해적
-                    <small>+30점 × 수</small>
+                    <small>+30점 × 수 (최대 6)</small>
                   </span>
                   <div className="bonusRowStepper">
                     <Stepper
@@ -230,7 +270,7 @@ function PlayerCard({ player, round, state, onPatch }: CardProps) {
                 <div className="bonusRow">
                   <span className={`bonusRowLabel${bonusDisabled ? ' bonusRowLabel--disabled' : ''}`}>
                     일반 14 카드
-                    <small>+10점 × 수</small>
+                    <small>+10점 × 수 (노랑·보라·초록)</small>
                   </span>
                   <div className="bonusRowStepper">
                     <Stepper
@@ -242,11 +282,11 @@ function PlayerCard({ player, round, state, onPatch }: CardProps) {
                   </div>
                 </div>
 
-                {/* Black 14s */}
+                {/* Black 14 */}
                 <div className="bonusRow">
                   <span className={`bonusRowLabel${bonusDisabled ? ' bonusRowLabel--disabled' : ''}`}>
                     검정 14 카드
-                    <small>+20점 × 수</small>
+                    <small>+20점 (졸리 로저)</small>
                   </span>
                   <div className="bonusRowStepper">
                     <Stepper
@@ -262,7 +302,7 @@ function PlayerCard({ player, round, state, onPatch }: CardProps) {
                 <div className="bonusRow">
                   <span className={`bonusRowLabel${bonusDisabled ? ' bonusRowLabel--disabled' : ''}`}>
                     Loot 동맹
-                    <small>+20점 × 수</small>
+                    <small>+20점 × 수 (양측 모두 입찰 성공 시)</small>
                   </span>
                   <div className="bonusRowStepper">
                     <Stepper
@@ -274,27 +314,24 @@ function PlayerCard({ player, round, state, onPatch }: CardProps) {
                   </div>
                 </div>
 
-                {/* Rascal Wager (0 / 10 / 20 stored, shown as 0/1/2 × 10) */}
-                <div className="bonusRow">
+                {/* Rascal Wager — segment picker */}
+                <div className="bonusRow bonusRow--col">
                   <span className={`bonusRowLabel${bonusDisabled ? ' bonusRowLabel--disabled' : ''}`}>
                     Rascal Wager
-                    <small>성공 +, 실패 − / 단위 10점</small>
+                    <small>입찰 성공 시 +, 실패 시 − 자동 반영</small>
                   </span>
-                  <div className="bonusRowStepper">
-                    <Stepper
-                      value={cell.rascalWager / 10}
-                      max={2}
-                      disabled={bonusDisabled}
-                      onChange={(v) => onPatch({ rascalWager: (v ?? 0) * 10 })}
-                    />
-                  </div>
+                  <RascalPicker
+                    value={cell.rascalWager}
+                    disabled={bonusDisabled}
+                    onChange={(v) => onPatch({ rascalWager: v })}
+                  />
                 </div>
               </div>
             )}
           </>
         )}
 
-        {/* ── Manual override ── */}
+        {/* Manual override */}
         <div className="cardDivider" />
         <div className="manualSection">
           <div className="manualToggleRow">
