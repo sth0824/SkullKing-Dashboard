@@ -14,6 +14,10 @@ export const BONUS_PER_STANDARD_14 = 10;
 export const BONUS_PER_BLACK_14 = 20;
 /** Loot 동맹 1회 성립 시 보너스입니다. */
 export const BONUS_PER_LOOT_ALLIANCE = 20;
+/** 인어+스컬킹으로 1등 항해사를 잡은 경우 보너스입니다. */
+export const BONUS_FIRST_MATE_CAPTURE = 30;
+/** 데이빗 존스로 해양생물 1장당 보너스입니다. */
+export const BONUS_PER_DAVY_JONES_MARINE = 20;
 /** 0트릙 입찭 성공/실패 시 라운드마다 ×하는 배수 */
 export const ZERO_BID_MULTIPLIER = 10;
 /** localStorage 키 */

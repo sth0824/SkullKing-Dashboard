@@ -1,10 +1,13 @@
 import { useState } from 'react';
-import { calcRoundPoints, isRoundTakeSumValid, type RoundInput } from '../domain/score';
+import { calcRoundPoints, effectiveTaken, isRoundTakeSumValid, type RoundInput } from '../domain/score';
 import { getCell, type Player, type PersistedV1 } from '../state/gameState';
 
 type Props = {
   round: number;
   state: PersistedV1;
+  /** 크라켄이 나온 라운드면 물리 트릙 합 검증을 생략합니다. */
+  kraken: boolean;
+  onKrakenChange: (kraken: boolean) => void;
   onPatch: (playerId: string, patch: Partial<RoundInput>) => void;
 };
 
@@ -100,19 +103,34 @@ function RascalPicker({ value, disabled, onChange }: RascalPickerProps) {
 }
 
 // ── RoundPanel ───────────────────────────────────────────
-export function RoundPanel({ round, state, onPatch }: Props) {
+export function RoundPanel({ round, state, kraken, onKrakenChange, onPatch }: Props) {
   const takes = state.players.map((p) => getCell(state, round, p.id).taken);
   const allTakesIn = takes.every((t) => t !== null);
   const { ok, sum } = allTakesIn
     ? isRoundTakeSumValid(round, takes.map((t) => t as number))
     : { ok: true, sum: 0 };
-  const showTakeWarning = allTakesIn && !ok;
+  const showTakeWarning = allTakesIn && !ok && !kraken;
 
   return (
     <div className="roundPanel">
+      <div className="roundMetaRow">
+        <label className="krakenRow">
+          <input
+            type="checkbox"
+            checked={kraken}
+            onChange={(e) => onKrakenChange(e.target.checked)}
+          />
+          <span>이 라운드 크라켄 있음 (실제 트릙 합 검증 생략)</span>
+        </label>
+      </div>
+      {kraken && (
+        <p className="roundInfo" role="status">
+          크라켄 라운드: 플레이어 &apos;실제&apos; 트릙 합이 {round}와 다를 수 있습니다.
+        </p>
+      )}
       {showTakeWarning && (
         <p className="roundWarn" role="status">
-          ⚠️ '실제' 합이 {round}이어야 합니다 (현재: {sum})
+          ⚠️ &apos;실제&apos; 합이 {round}이어야 합니다 (현재: {sum})
         </p>
       )}
       {state.players.map((p) => (
@@ -146,15 +164,22 @@ function PlayerCard({ player, round, state, onPatch }: CardProps) {
   const scoreClass = br.total === null ? 'ptNull' : br.total < 0 ? 'ptNeg' : 'ptPos';
   const cardStateClass =
     br.total === null ? '' : br.total > 0 ? ' playerCard--pos' : br.total < 0 ? ' playerCard--neg' : '';
-  const bothSet = cell.bid !== null && cell.taken !== null;
+  const takenRaw = cell.taken;
+  const takenEff =
+    takenRaw !== null ? effectiveTaken(takenRaw, cell.takenDelta ?? 0, round) : null;
+  const bothSet = cell.bid !== null && takenRaw !== null && takenEff !== null;
   const bidRowClass = bothSet
-    ? cell.bid === cell.taken
+    ? cell.bid === takenEff
       ? ' bidTakenRow--ok'
       : ' bidTakenRow--fail'
     : '';
 
   // Derived: any bonus is set (show indicator on collapsed button)
   const hasBonus =
+    (cell.takenDelta ?? 0) !== 0 ||
+    (cell.extraBonusPoints ?? 0) !== 0 ||
+    cell.firstMateBonus ||
+    (cell.davyJonesMarineCount ?? 0) > 0 ||
     cell.mermaidCatchesSkullKing ||
     cell.piratesCatchMermaids > 0 ||
     cell.skullKingPiratesCaught > 0 ||
@@ -196,6 +221,22 @@ function PlayerCard({ player, round, state, onPatch }: CardProps) {
           </div>
         </div>
 
+        <div className="takenDeltaRow">
+          <span className="bidTakenLabel">채점 보정 (해적 등)</span>
+          <Stepper
+            value={cell.takenDelta ?? 0}
+            min={-1}
+            max={1}
+            disabled={cell.taken === null}
+            size="md"
+            onChange={(v) => onPatch({ takenDelta: v ?? 0 })}
+          />
+          <span className="takenDeltaHint">
+            물리 트릙은 위 &apos;실제&apos;, 채점은 실제+보정 (현재 채점용:{' '}
+            {takenEff === null ? '—' : takenEff})
+          </span>
+        </div>
+
         {/* Bonus section */}
         {!isManual && (
           <>
@@ -217,6 +258,62 @@ function PlayerCard({ player, round, state, onPatch }: CardProps) {
 
             {bonusOpen && (
               <div className="bonusGrid">
+                {/* 임의 카드 보너스 (1+ 입찰 성공 시만 합산) */}
+                <div className="bonusRow bonusRow--col">
+                  <span className={`bonusRowLabel${bonusDisabled ? ' bonusRowLabel--disabled' : ''}`}>
+                    추가 보너스 점수
+                    <small>+10, −5 등 (1+ 입찰 성공 시만)</small>
+                  </span>
+                  <input
+                    className="manualInput bonusExtraInput"
+                    type="number"
+                    inputMode="numeric"
+                    disabled={bonusDisabled}
+                    value={cell.extraBonusPoints ?? 0}
+                    onChange={(e) => {
+                      const n = Math.round(Number(e.target.value));
+                      onPatch({
+                        extraBonusPoints: Number.isNaN(n)
+                          ? 0
+                          : Math.min(9999, Math.max(-9999, n))
+                      });
+                    }}
+                  />
+                </div>
+
+                {/* 1등 항해사 */}
+                <div className="bonusRow">
+                  <label className={`toggleSwitch${bonusDisabled ? ' toggleSwitch--disabled' : ''}`}>
+                    <input
+                      className="toggleTrack"
+                      type="checkbox"
+                      checked={cell.firstMateBonus}
+                      disabled={bonusDisabled}
+                      onChange={(e) => onPatch({ firstMateBonus: e.target.checked })}
+                    />
+                    <span className={`bonusRowLabel${bonusDisabled ? ' bonusRowLabel--disabled' : ''}`}>
+                      인어+스컬킹 → 1등 항해사
+                      <small>+30점</small>
+                    </span>
+                  </label>
+                </div>
+
+                {/* 데이빗 존스 */}
+                <div className="bonusRow">
+                  <span className={`bonusRowLabel${bonusDisabled ? ' bonusRowLabel--disabled' : ''}`}>
+                    데이빗 존스 → 해양생물
+                    <small>+20점 × 수</small>
+                  </span>
+                  <div className="bonusRowStepper">
+                    <Stepper
+                      value={cell.davyJonesMarineCount}
+                      max={8}
+                      disabled={bonusDisabled}
+                      onChange={(v) => onPatch({ davyJonesMarineCount: v ?? 0 })}
+                    />
+                  </div>
+                </div>
+
                 {/* Mermaid → Skull King */}
                 <div className="bonusRow">
                   <label className={`toggleSwitch${bonusDisabled ? ' toggleSwitch--disabled' : ''}`}>

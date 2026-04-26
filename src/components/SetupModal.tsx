@@ -15,9 +15,31 @@ function newPlayerId() {
   return globalThis.crypto?.randomUUID?.() ?? `p-${Date.now()}-${Math.random()}`;
 }
 
+function clampRound(n: number, fallback: number) {
+  if (!Number.isFinite(n) || n < 1) return Math.min(20, Math.max(1, fallback));
+  return Math.min(20, Math.max(1, Math.round(n)));
+}
+
+function parseRoundDraft(raw: string, fallback: number): number {
+  const t = raw.trim();
+  if (t === '') return fallback;
+  const n = parseInt(t, 10);
+  if (Number.isNaN(n)) return fallback;
+  return clampRound(n, fallback);
+}
+
+function isValidRoundDraft(raw: string): boolean {
+  const t = raw.trim();
+  if (t === '') return false;
+  const n = parseInt(t, 10);
+  return !Number.isNaN(n) && n >= 1 && n <= 20;
+}
+
 export function SetupModal({ open, onClose, onSave, initial }: Props) {
-  const [roundCount, setRoundCount] = useState(initial.roundCount);
+  const [roundDraft, setRoundDraft] = useState(String(initial.roundCount));
   const [players, setPlayers] = useState<Player[]>(initial.players);
+
+  const roundDraftValid = isValidRoundDraft(roundDraft);
 
   if (!open) return null;
 
@@ -32,14 +54,22 @@ export function SetupModal({ open, onClose, onSave, initial }: Props) {
         <label className="field">
           <span className="fieldLabel">총 라운드 (1~20)</span>
           <input
-            className="fieldInput"
-            type="number"
-            min={1}
-            max={20}
-            value={roundCount}
-            onChange={(e) =>
-              setRoundCount(Math.max(1, Math.min(20, Number(e.target.value) || 1)))
-            }
+            className="fieldInput flex1"
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            autoComplete="off"
+            aria-invalid={!roundDraftValid && roundDraft.trim() !== ''}
+            value={roundDraft}
+            onChange={(e) => setRoundDraft(e.target.value.replace(/\D/g, ''))}
+            onBlur={() => {
+              if (roundDraft.trim() === '') {
+                setRoundDraft(String(initial.roundCount));
+                return;
+              }
+              const next = parseRoundDraft(roundDraft, initial.roundCount);
+              setRoundDraft(String(next));
+            }}
           />
         </label>
 
@@ -97,8 +127,13 @@ export function SetupModal({ open, onClose, onSave, initial }: Props) {
           <button
             type="button"
             className="btnPrimary"
-            onClick={() => onSave({ players, roundCount })}
-            disabled={players.length < MIN || roundCount < 1}
+            onClick={() =>
+              onSave({
+                players,
+                roundCount: parseRoundDraft(roundDraft, initial.roundCount)
+              })
+            }
+            disabled={players.length < MIN || !roundDraftValid}
           >
             저장
           </button>

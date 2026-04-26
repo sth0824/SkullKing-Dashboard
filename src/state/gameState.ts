@@ -16,6 +16,8 @@ export type PersistedV1 = {
    * round 키는 "1".."N" 문자열
    */
   cells: Record<string, Record<string, RoundInput>>;
+  /** 라운드별 메타(크라켄 등). 키는 "1".."N" 문자열 */
+  roundFlags?: Record<string, { kraken?: boolean }>;
 };
 
 function emptyInput(): RoundInput {
@@ -29,6 +31,10 @@ function emptyInput(): RoundInput {
     black14sCaptured: 0,
     lootAlliances: 0,
     rascalWager: 0,
+    takenDelta: 0,
+    extraBonusPoints: 0,
+    firstMateBonus: false,
+    davyJonesMarineCount: 0,
     manualOverridePoints: null
   };
 }
@@ -53,7 +59,8 @@ export function makeInitialState(over: Partial<PersistedV1> = {}): PersistedV1 {
     version: 1,
     roundCount,
     players,
-    cells: over.cells ?? {}
+    cells: over.cells ?? {},
+    roundFlags: over.roundFlags ?? {}
   };
 }
 
@@ -83,6 +90,21 @@ export function withCell(
   };
 }
 
+export function getRoundKraken(state: PersistedV1, round: number): boolean {
+  return Boolean(state.roundFlags?.[String(round)]?.kraken);
+}
+
+export function withRoundKraken(state: PersistedV1, round: number, kraken: boolean): PersistedV1 {
+  const k = String(round);
+  return {
+    ...state,
+    roundFlags: {
+      ...(state.roundFlags ?? {}),
+      [k]: { ...(state.roundFlags?.[k] ?? {}), kraken }
+    }
+  };
+}
+
 export function loadFromStorage(): PersistedV1 {
   if (typeof localStorage === 'undefined') {
     return makeInitialState();
@@ -100,6 +122,7 @@ export function loadFromStorage(): PersistedV1 {
       return makeInitialState();
     }
     if (!p.cells) p.cells = {};
+    if (!p.roundFlags) p.roundFlags = {};
     return p;
   } catch {
     return makeInitialState();
@@ -123,6 +146,7 @@ export function mergePlayersAndRounds(
   roundCount: number
 ): PersistedV1 {
   const cells: Record<string, Record<string, RoundInput>> = {};
+  const roundFlags: Record<string, { kraken?: boolean }> = {};
   for (let r = 1; r <= roundCount; r += 1) {
     const k = String(r);
     const row: Record<string, RoundInput> = {};
@@ -131,6 +155,7 @@ export function mergePlayersAndRounds(
       row[p.id] = { ...emptyInput(), ...before };
     }
     cells[k] = row;
+    roundFlags[k] = { ...(prev.roundFlags?.[k] ?? {}) };
   }
-  return { version: 1, roundCount, players: nextPlayers, cells };
+  return { version: 1, roundCount, players: nextPlayers, cells, roundFlags };
 }

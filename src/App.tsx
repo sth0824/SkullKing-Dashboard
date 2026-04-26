@@ -6,11 +6,13 @@ import { SetupModal } from './components/SetupModal';
 import { TotalBar } from './components/TotalBar';
 import {
   getCell,
+  getRoundKraken,
   loadFromStorage,
   makeInitialState,
   mergePlayersAndRounds,
   saveToStorage,
   withCell,
+  withRoundKraken,
   type PersistedV1,
   type Player,
 } from './state/gameState';
@@ -214,6 +216,8 @@ export default function App() {
               <RoundPanel
                 round={r}
                 state={state}
+                kraken={getRoundKraken(state, r)}
+                onKrakenChange={(v) => setState((s) => withRoundKraken(s, r, v))}
                 onPatch={(pid, patch) => onPatch(r, pid, patch)}
               />
             </details>

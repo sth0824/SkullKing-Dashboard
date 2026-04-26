@@ -1,5 +1,7 @@
 import {
+  BONUS_FIRST_MATE_CAPTURE,
   BONUS_PER_BLACK_14,
+  BONUS_PER_DAVY_JONES_MARINE,
   BONUS_PER_LOOT_ALLIANCE,
   BONUS_PER_MERMAID_CAUGHT_BY_PIRATE,
   BONUS_MERMAID_CATCHES_SKULL_KING,
@@ -34,6 +36,17 @@ export type RoundInput = {
    */
   rascalWager: number;
   /**
+   * 해적 능력 등으로 채점용 실제 트릭 수를 보정합니다(물리 트릭 `taken`은 그대로 두고 합산 검증에만 사용).
+   * -1, 0, +1 등 소수 범위를 권장합니다.
+   */
+  takenDelta: number;
+  /** 카드/특수 상황 등 임의 가감 점수(1+ 입찰 성공 시에만 합산). */
+  extraBonusPoints: number;
+  /** 인어+스컬킹으로 1등 항해사를 잡은 보너스(1+ 입찰 성공 시에만). */
+  firstMateBonus: boolean;
+  /** 데이빗 존스로 잡은 해양생물 수(1+ 입찰 성공 시에만). */
+  davyJonesMarineCount: number;
+  /**
    * 자동 계산을 무시하고 이 라운드 총점을 직접 지정합니다(특수 상황·하우스 룰).
    * 숫자로 설정돼 있으면 다른 자동 점수 필드는 무시합니다.
    */
@@ -54,6 +67,13 @@ function toNumberOrNull(v: number | null | undefined, fallback: number | null = 
   return v;
 }
 
+/** 채점에 쓰는 실제 트릭 수(물리 트릙 + 보정, 라운드 범위로 클램프) */
+export function effectiveTaken(rawTaken: number, takenDelta: number, roundNumber: number): number {
+  const d = Number.isFinite(takenDelta) ? Math.round(takenDelta) : 0;
+  const v = rawTaken + d;
+  return Math.min(roundNumber, Math.max(0, v));
+}
+
 /**
  * 1인분 라운드 점수를 계산합니다.
  * bid·taken이 하나라도 null이면 합산에 쓰지 않도록 total은 null로 둡니다.
@@ -71,10 +91,13 @@ export function calcRoundPoints(
   }
 
   const bid = toNumberOrNull(input.bid, null);
-  const taken = toNumberOrNull(input.taken, null);
-  if (bid === null || taken === null) {
+  const takenRaw = toNumberOrNull(input.taken, null);
+  if (bid === null || takenRaw === null) {
     return { total: null, baseRule: 'none', usedManual: false };
   }
+
+  const delta = toNumberOrNull(input.takenDelta, 0) ?? 0;
+  const takenEff = effectiveTaken(takenRaw, delta, roundNumber);
 
   if (roundNumber < 1) {
     // 비정상이어도 0라운드로 취급하지 않고, 호출 측에서 round를 보정한다고 가정
@@ -83,7 +106,7 @@ export function calcRoundPoints(
 
   if (bid === 0) {
     // 0트릙 입찰: 성공/실패만 봄(보너스·트릙×20은 적용되지 않음)
-    if (taken === 0) {
+    if (takenEff === 0) {
       return {
         total: roundNumber * ZERO_BID_MULTIPLIER,
         baseRule: 'zero',
@@ -97,7 +120,15 @@ export function calcRoundPoints(
     };
   }
 
-  if (bid === taken) {
+  const extraBonus = Number.isFinite(input.extraBonusPoints)
+    ? Math.round(input.extraBonusPoints)
+    : 0;
+  const bonusFirstMate = input.firstMateBonus ? BONUS_FIRST_MATE_CAPTURE : 0;
+  const bonusDavy =
+    Math.max(0, Math.round(toNumberOrNull(input.davyJonesMarineCount, 0) ?? 0)) *
+    BONUS_PER_DAVY_JONES_MARINE;
+
+  if (bid === takenEff) {
     const base = bid * POINTS_PER_TRICK;
     const bonusMermaid = input.mermaidCatchesSkullKing ? BONUS_MERMAID_CATCHES_SKULL_KING : 0;
     const bonusPirateMermaids =
@@ -116,13 +147,16 @@ export function calcRoundPoints(
         bonusStandard14 +
         bonusBlack14 +
         bonusLoot +
-        rascal,
+        rascal +
+        extraBonus +
+        bonusFirstMate +
+        bonusDavy,
       baseRule: 'standard',
       usedManual: false
     };
   }
 
-  const mismatchPenalty = -Math.abs(bid - taken) * PENALTY_PER_TRICK;
+  const mismatchPenalty = -Math.abs(bid - takenEff) * PENALTY_PER_TRICK;
   const rascalPenalty = -Math.max(0, input.rascalWager);
   return {
     total: mismatchPenalty + rascalPenalty,

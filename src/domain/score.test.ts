@@ -1,12 +1,19 @@
 import { describe, expect, it } from 'vitest';
 import {
+  BONUS_FIRST_MATE_CAPTURE,
   BONUS_PER_BLACK_14,
+  BONUS_PER_DAVY_JONES_MARINE,
   BONUS_PER_LOOT_ALLIANCE,
   BONUS_PER_MERMAID_CAUGHT_BY_PIRATE,
   BONUS_MERMAID_CATCHES_SKULL_KING,
   BONUS_PER_PIRATE_CAUGHT
 } from './constants';
-import { calcRoundPoints, isRoundTakeSumValid, type RoundInput } from './score';
+import {
+  calcRoundPoints,
+  effectiveTaken,
+  isRoundTakeSumValid,
+  type RoundInput
+} from './score';
 
 const base = (over: Partial<RoundInput> = {}): RoundInput => ({
   bid: 1,
@@ -18,6 +25,10 @@ const base = (over: Partial<RoundInput> = {}): RoundInput => ({
   black14sCaptured: 0,
   lootAlliances: 0,
   rascalWager: 0,
+  takenDelta: 0,
+  extraBonusPoints: 0,
+  firstMateBonus: false,
+  davyJonesMarineCount: 0,
   manualOverridePoints: null,
   ...over
 });
@@ -110,7 +121,7 @@ describe('calcRoundPoints', () => {
 
   it('isRoundTakeSumValid: taken 합이 라운드와 같을 때 ok', () => {
     expect(isRoundTakeSumValid(3, [0, 1, 1, 1]).ok).toBe(true);
-    expect(isRoundTakeSumValid(3, [0, 1, 1]).ok).toBe(true);
+    expect(isRoundTakeSumValid(3, [1, 1, 1]).ok).toBe(true);
   });
 
   it('isRoundTakeSumValid: 합이 틀리면 ok=false', () => {
@@ -124,5 +135,52 @@ describe('calcRoundPoints', () => {
     });
     expect(r.total).toBe(99);
     expect(r.usedManual).toBe(true);
+  });
+
+  it('takenDelta로 채점용 실제를 맞추면 입찰 성공으로 처리', () => {
+    const r = calcRoundPoints(5, base({ bid: 3, taken: 2, takenDelta: 1 }));
+    expect(r.total).toBe(60);
+    expect(r.baseRule).toBe('standard');
+  });
+
+  it('0입찰 성공: 물리 1트릙 + 보정 −1이면 채점 0으로 성공', () => {
+    const r = calcRoundPoints(4, base({ bid: 0, taken: 1, takenDelta: -1 }));
+    expect(r.total).toBe(40);
+    expect(r.baseRule).toBe('zero');
+  });
+
+  it('추가 보너스·1등 항해사·데이빗은 1+ 성공 시만 합산', () => {
+    const r = calcRoundPoints(
+      3,
+      base({
+        bid: 2,
+        taken: 2,
+        extraBonusPoints: -5,
+        firstMateBonus: true,
+        davyJonesMarineCount: 1
+      })
+    );
+    expect(r.total).toBe(
+      40 - 5 + BONUS_FIRST_MATE_CAPTURE + BONUS_PER_DAVY_JONES_MARINE
+    );
+  });
+
+  it('입찰 실패 시 추가 보너스 미적용', () => {
+    const r = calcRoundPoints(
+      3,
+      base({
+        bid: 2,
+        taken: 0,
+        extraBonusPoints: 50,
+        firstMateBonus: true,
+        davyJonesMarineCount: 2
+      })
+    );
+    expect(r.total).toBe(-20);
+  });
+
+  it('effectiveTaken은 라운드 범위로 클램프', () => {
+    expect(effectiveTaken(2, 5, 4)).toBe(4);
+    expect(effectiveTaken(1, -3, 5)).toBe(0);
   });
 });
