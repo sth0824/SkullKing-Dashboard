@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { calcRoundPoints, effectiveTaken, isRoundTakeSumValid, type RoundInput } from '../domain/score';
+import { calcRoundPoints, isRoundTakeSumValid, type RoundInput } from '../domain/score';
 import { getCell, type Player, type PersistedV1 } from '../state/gameState';
 
 type Props = {
@@ -204,25 +204,23 @@ function PlayerCard({ player, round, state, onPatch }: CardProps) {
   const cell = getCell(state, round, player.id);
   const br = calcRoundPoints(round, cell);
   const isManual = cell.manualOverridePoints !== null;
-  const bonusDisabled = cell.bid === null || cell.bid < 1;
+  // bid가 미입력(null)일 때만 비활성화합니다 (bid=0도 접근 허용)
+  const bonusDisabled = cell.bid === null;
   const [bonusOpen, setBonusOpen] = useState(false);
 
   const scoreClass = br.total === null ? 'ptNull' : br.total < 0 ? 'ptNeg' : 'ptPos';
   const cardStateClass =
     br.total === null ? '' : br.total > 0 ? ' playerCard--pos' : br.total < 0 ? ' playerCard--neg' : '';
-  const takenRaw = cell.taken;
-  const takenEff =
-    takenRaw !== null ? effectiveTaken(takenRaw, cell.takenDelta ?? 0, round) : null;
-  const bothSet = cell.bid !== null && takenRaw !== null && takenEff !== null;
+  // bid와 실제 트릭을 직접 비교해 배경색을 결정합니다
+  const bothSet = cell.bid !== null && cell.taken !== null;
   const bidRowClass = bothSet
-    ? cell.bid === takenEff
+    ? cell.bid === cell.taken
       ? ' bidTakenRow--ok'
       : ' bidTakenRow--fail'
     : '';
 
-  // Derived: any bonus is set (show indicator on collapsed button)
+  // 보너스 점 표시를 위해 하나라도 입력된 보너스가 있는지 확인합니다
   const hasBonus =
-    (cell.takenDelta ?? 0) !== 0 ||
     (cell.extraBonusPoints ?? 0) !== 0 ||
     cell.firstMateBonus ||
     (cell.davyJonesMarineCount ?? 0) > 0 ||
@@ -265,22 +263,6 @@ function PlayerCard({ player, round, state, onPatch }: CardProps) {
               onChange={(v) => onPatch({ taken: v })}
             />
           </div>
-        </div>
-
-        <div className="takenDeltaRow">
-          <span className="bidTakenLabel">채점 보정 (해적 등)</span>
-          <Stepper
-            value={cell.takenDelta ?? 0}
-            min={-1}
-            max={1}
-            disabled={cell.taken === null}
-            size="md"
-            onChange={(v) => onPatch({ takenDelta: v ?? 0 })}
-          />
-          <span className="takenDeltaHint">
-            물리 트릭은 위 &apos;실제&apos;, 채점은 실제+보정 (현재 채점용:{' '}
-            {takenEff === null ? '—' : takenEff})
-          </span>
         </div>
 
         {/* Bonus section */}
@@ -443,20 +425,20 @@ function PlayerCard({ player, round, state, onPatch }: CardProps) {
                   </div>
                 </div>
 
-                {/* Loot Alliances */}
+                {/* 동맹 보너스 — 체크하면 +20pt (bid=0도 가능) */}
                 <div className="bonusRow">
-                  <span className={`bonusRowLabel${bonusDisabled ? ' bonusRowLabel--disabled' : ''}`}>
-                    Loot 동맹
-                    <small>+20점 × 수 (양측 모두 입찰 성공 시)</small>
-                  </span>
-                  <div className="bonusRowStepper">
-                    <Stepper
-                      value={cell.lootAlliances}
-                      max={2}
-                      disabled={bonusDisabled}
-                      onChange={(v) => onPatch({ lootAlliances: v ?? 0 })}
+                  <label className="toggleSwitch">
+                    <input
+                      className="toggleTrack"
+                      type="checkbox"
+                      checked={cell.lootAlliances > 0}
+                      onChange={(e) => onPatch({ lootAlliances: e.target.checked ? 1 : 0 })}
                     />
-                  </div>
+                    <span className="bonusRowLabel">
+                      동맹 보너스
+                      <small>+20pt</small>
+                    </span>
+                  </label>
                 </div>
 
                 {/* Rascal Wager — segment picker */}

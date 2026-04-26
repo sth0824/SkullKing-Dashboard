@@ -35,13 +35,9 @@ export default function App() {
   const [showReset, setShowReset] = useState(false);
   const [showGameComplete, setShowGameComplete] = useState(false);
 
-  // Refs for programmatic control of <details> elements
+  // <details> 요소를 코드로 여닫기 위한 ref 모음입니다
   const detailsRefs = useRef<Record<number, HTMLDetailsElement | null>>({});
   const didMountRef = useRef(false);
-  // Tracks which rounds were already complete (to detect newly completed)
-  const isInitializedRef = useRef(false);
-  const wasCompleteRef = useRef<Set<number>>(new Set());
-  const advanceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     saveToStorage(state);
@@ -78,39 +74,6 @@ export default function App() {
     return info;
   }, [state]);
 
-  // Auto-advance to next round when a round is newly completed (입찰+실제 트릭 입력 감지)
-  useEffect(() => {
-    if (!isInitializedRef.current) {
-      // 첫 마운트 시 이미 완료된 라운드를 기록합니다
-      isInitializedRef.current = true;
-      for (let r = 1; r <= state.roundCount; r++) {
-        if (roundInfo[r]?.complete) wasCompleteRef.current.add(r);
-      }
-      return;
-    }
-
-    for (let r = 1; r <= state.roundCount; r++) {
-      if (roundInfo[r]?.complete && !wasCompleteRef.current.has(r)) {
-        wasCompleteRef.current.add(r);
-        const detail = detailsRefs.current[r];
-        if (detail?.open) {
-          if (advanceTimerRef.current) clearTimeout(advanceTimerRef.current);
-          advanceTimerRef.current = setTimeout(() => {
-            if (detailsRefs.current[r]) detailsRefs.current[r]!.open = false;
-            const next = r + 1;
-            if (next <= state.roundCount && detailsRefs.current[next]) {
-              detailsRefs.current[next]!.open = true;
-              detailsRefs.current[next]?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }
-          }, 600);
-        }
-        break;
-      }
-    }
-    return () => {
-      if (advanceTimerRef.current) clearTimeout(advanceTimerRef.current);
-    };
-  }, [roundInfo, state.roundCount]);
 
   const openSettings = useCallback(() => {
     setSetupKey((k) => k + 1);
@@ -126,16 +89,12 @@ export default function App() {
     setState(makeInitialState());
     setShowReset(false);
     setShowGameComplete(false);
-    wasCompleteRef.current = new Set();
-    isInitializedRef.current = false;
   }, []);
 
   // 멤버·라운드 수는 유지하고 점수만 초기화합니다
   const resetKeepPlayersCallback = useCallback(() => {
     setState((s) => resetKeepPlayers(s));
     setShowGameComplete(false);
-    wasCompleteRef.current = new Set();
-    isInitializedRef.current = false;
   }, []);
 
   const onPatch = useCallback((round: number, playerId: string, patch: Partial<RoundInput>) => {

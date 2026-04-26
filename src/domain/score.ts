@@ -105,10 +105,11 @@ export function calcRoundPoints(
   }
 
   if (bid === 0) {
-    // 0트릭 입찰: 성공/실패만 봄(보너스·트릭×20은 적용되지 않음)
+    // 0트릭 입찰: 성공 시 동맹 보너스만 추가로 합산합니다
     if (takenEff === 0) {
+      const bonusLoot = Math.max(0, input.lootAlliances) * BONUS_PER_LOOT_ALLIANCE;
       return {
-        total: roundNumber * ZERO_BID_MULTIPLIER,
+        total: roundNumber * ZERO_BID_MULTIPLIER + bonusLoot,
         baseRule: 'zero',
         usedManual: false
       };
