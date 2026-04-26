@@ -18,7 +18,7 @@ export const BONUS_PER_LOOT_ALLIANCE = 20;
 export const BONUS_FIRST_MATE_CAPTURE = 30;
 /** 데이빗 존스로 해양생물 1장당 보너스입니다. */
 export const BONUS_PER_DAVY_JONES_MARINE = 20;
-/** 0트릙 입찭 성공/실패 시 라운드마다 ×하는 배수 */
+/** 0트릭 입찰 성공/실패 시 라운드마다 ×하는 배수 */
 export const ZERO_BID_MULTIPLIER = 10;
 /** localStorage 키 */
 export const STORAGE_KEY = 'skull-king-scoreboard-v1';

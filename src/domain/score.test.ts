@@ -40,12 +40,12 @@ describe('calcRoundPoints', () => {
     expect(r.baseRule).toBe('zero');
   });
 
-  it('0입찰 실패 시 -라운드×10 (5라운드, 1트릙)', () => {
+  it('0입찰 실패 시 -라운드×10 (5라운드, 1트릭)', () => {
     const r = calcRoundPoints(5, base({ bid: 0, taken: 1 }));
     expect(r.total).toBe(-50);
   });
 
-  it('1 이상 입찰 정확 시 트릙당 20점 (2트릙 → 40)', () => {
+  it('1 이상 입찰 정확 시 트릭당 20점 (2트릭 → 40)', () => {
     const r = calcRoundPoints(3, base({ bid: 2, taken: 2 }));
     expect(r.total).toBe(40);
   });
@@ -143,7 +143,7 @@ describe('calcRoundPoints', () => {
     expect(r.baseRule).toBe('standard');
   });
 
-  it('0입찰 성공: 물리 1트릙 + 보정 −1이면 채점 0으로 성공', () => {
+  it('0입찰 성공: 물리 1트릭 + 보정 −1이면 채점 0으로 성공', () => {
     const r = calcRoundPoints(4, base({ bid: 0, taken: 1, takenDelta: -1 }));
     expect(r.total).toBe(40);
     expect(r.baseRule).toBe('zero');

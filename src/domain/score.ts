@@ -14,9 +14,9 @@ import {
 
 /** 한 플레이어의 한 라운드에 대한 입력 */
 export type RoundInput = {
-  /** 입찰(예측)한 트릙 수, 미입력은 null */
+  /** 입찰(예측)한 트릭 수, 미입력은 null */
   bid: number | null;
-  /** 실제로 가져온 트릙 수, 미입력은 null */
+  /** 실제로 가져온 트릭 수, 미입력은 null */
   taken: number | null;
   /** 인어가 스컬킹을 잡은 보너스(입찰이 정확할 때만 적용) */
   mermaidCatchesSkullKing: boolean;
@@ -67,7 +67,7 @@ function toNumberOrNull(v: number | null | undefined, fallback: number | null = 
   return v;
 }
 
-/** 채점에 쓰는 실제 트릭 수(물리 트릙 + 보정, 라운드 범위로 클램프) */
+/** 채점에 쓰는 실제 트릭 수(물리 트릭 + 보정, 라운드 범위로 클램프) */
 export function effectiveTaken(rawTaken: number, takenDelta: number, roundNumber: number): number {
   const d = Number.isFinite(takenDelta) ? Math.round(takenDelta) : 0;
   const v = rawTaken + d;
@@ -105,7 +105,7 @@ export function calcRoundPoints(
   }
 
   if (bid === 0) {
-    // 0트릙 입찰: 성공/실패만 봄(보너스·트릙×20은 적용되지 않음)
+    // 0트릭 입찰: 성공/실패만 봄(보너스·트릭×20은 적용되지 않음)
     if (takenEff === 0) {
       return {
         total: roundNumber * ZERO_BID_MULTIPLIER,

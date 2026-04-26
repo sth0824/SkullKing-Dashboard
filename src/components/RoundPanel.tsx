@@ -5,7 +5,7 @@ import { getCell, type Player, type PersistedV1 } from '../state/gameState';
 type Props = {
   round: number;
   state: PersistedV1;
-  /** 크라켄이 나온 라운드면 물리 트릙 합 검증을 생략합니다. */
+  /** 크라켄이 나온 라운드면 물리 트릭 합 검증을 생략합니다. */
   kraken: boolean;
   onKrakenChange: (kraken: boolean) => void;
   onPatch: (playerId: string, patch: Partial<RoundInput>) => void;
@@ -120,17 +120,17 @@ export function RoundPanel({ round, state, kraken, onKrakenChange, onPatch }: Pr
             checked={kraken}
             onChange={(e) => onKrakenChange(e.target.checked)}
           />
-          <span>이 라운드 크라켄 있음 (실제 트릙 합 검증 생략)</span>
+          <span>이 라운드 크라켄 있음 (실제 트릭 합 검증 생략)</span>
         </label>
       </div>
       {kraken && (
         <p className="roundInfo" role="status">
-          크라켄 라운드: 플레이어 &apos;실제&apos; 트릙 합이 {round}와 다를 수 있습니다.
+          크라켄 라운드: 플레이어 &apos;실제&apos; 트릭 합이 {round}와 다를 수 있습니다.
         </p>
       )}
       {showTakeWarning && (
         <p className="roundWarn" role="status">
-          ⚠️ &apos;실제&apos; 합이 {round}이어야 합니다 (현재: {sum})
+          ⚠️ &apos;실제&apos; 트릭 합이 {round}이어야 합니다 (현재: {sum})
         </p>
       )}
       {state.players.map((p) => (
@@ -232,7 +232,7 @@ function PlayerCard({ player, round, state, onPatch }: CardProps) {
             onChange={(v) => onPatch({ takenDelta: v ?? 0 })}
           />
           <span className="takenDeltaHint">
-            물리 트릙은 위 &apos;실제&apos;, 채점은 실제+보정 (현재 채점용:{' '}
+            물리 트릭은 위 &apos;실제&apos;, 채점은 실제+보정 (현재 채점용:{' '}
             {takenEff === null ? '—' : takenEff})
           </span>
         </div>
