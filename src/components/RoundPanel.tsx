@@ -204,8 +204,10 @@ function PlayerCard({ player, round, state, onPatch }: CardProps) {
   const cell = getCell(state, round, player.id);
   const br = calcRoundPoints(round, cell);
   const isManual = cell.manualOverridePoints !== null;
-  // bid가 미입력(null)일 때만 비활성화합니다 (bid=0도 접근 허용)
-  const bonusDisabled = cell.bid === null;
+  // bid가 1 이상일 때만 확장 보너스를 사용하도록 제한합니다.
+  const canUseExtendedBonus = cell.bid !== null && cell.bid > 0;
+  const isBidZeroOrNull = cell.bid === null || cell.bid === 0;
+  const bonusDisabled = !canUseExtendedBonus;
   const [bonusOpen, setBonusOpen] = useState(false);
 
   const scoreClass = br.total === null ? 'ptNull' : br.total < 0 ? 'ptNeg' : 'ptPos';
@@ -269,23 +271,41 @@ function PlayerCard({ player, round, state, onPatch }: CardProps) {
         {!isManual && (
           <>
             <div className="cardDivider" />
-            <button
-              type="button"
-              className="bonusToggleBtn"
-              disabled={bonusDisabled}
-              onClick={() => setBonusOpen((v) => !v)}
-            >
-              <span>
-                확장 보너스
-                {!bonusDisabled && hasBonus && !bonusOpen && (
-                  <span className="bonusDot" aria-label="보너스 입력됨" />
-                )}
-              </span>
-              <span className={`bonusChevron${bonusOpen ? ' bonusChevron--open' : ''}`}>▼</span>
-            </button>
 
-            {bonusOpen && (
-              <div className="bonusGrid">
+            {isBidZeroOrNull ? (
+              <div className="inlineLootRow">
+                <span className="inlineLootLabel">
+                  동맹 보너스
+                  <small>+20pt</small>
+                </span>
+                <label className="toggleSwitch" style={{ flex: 'none' }}>
+                  <input
+                    className="toggleTrack"
+                    type="checkbox"
+                    checked={cell.lootAlliances > 0}
+                    onChange={(e) => onPatch({ lootAlliances: e.target.checked ? 1 : 0 })}
+                  />
+                </label>
+              </div>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  className="bonusToggleBtn"
+                  disabled={bonusDisabled}
+                  onClick={() => setBonusOpen((v) => !v)}
+                >
+                  <span>
+                    확장 보너스
+                    {!bonusDisabled && hasBonus && !bonusOpen && (
+                      <span className="bonusDot" aria-label="보너스 입력됨" />
+                    )}
+                  </span>
+                  <span className={`bonusChevron${bonusOpen ? ' bonusChevron--open' : ''}`}>▼</span>
+                </button>
+
+                {bonusOpen && (
+                  <div className="bonusGrid">
                 {/* 추가/차감 점수 — 5점 단위 스테퍼 (1+ 입찰 성공 시만 합산) */}
                 <div className="bonusRow bonusRow--col">
                   <span className={`bonusRowLabel${bonusDisabled ? ' bonusRowLabel--disabled' : ''}`}>
@@ -425,7 +445,7 @@ function PlayerCard({ player, round, state, onPatch }: CardProps) {
                   </div>
                 </div>
 
-                {/* 동맹 보너스 — 체크하면 +20pt (bid=0도 가능) */}
+                {/* 동맹 보너스 — 체크하면 +20pt */}
                 <div className="bonusRow">
                   <label className="toggleSwitch">
                     <input
@@ -453,7 +473,9 @@ function PlayerCard({ player, round, state, onPatch }: CardProps) {
                     onChange={(v) => onPatch({ rascalWager: v })}
                   />
                 </div>
-              </div>
+                  </div>
+                )}
+              </>
             )}
           </>
         )}
