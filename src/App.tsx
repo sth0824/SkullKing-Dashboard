@@ -222,7 +222,7 @@ export default function App() {
                 <div className="roundSummaryLeft">
                   <span className="roundChevron">▼</span>
                   <span className="roundNum">라운드 {r}</span>
-                  {starter && <span className="roundHint">선: {starter.name}</span>}
+                  {starter && <span className="roundStarter">선: {starter.name}</span>}
                   {info.complete && <span className="roundDone">✓</span>}
                 </div>
                 <span className={`roundHint ${hintClass}`}>{hintText}</span>

@@ -278,6 +278,7 @@ input {
 .roundSummaryLeft {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 9px;
 }
 
@@ -306,6 +307,17 @@ details[open] > .roundSummary .roundChevron {
   border-radius: 20px;
   padding: 1px 7px;
   letter-spacing: 0.02em;
+}
+
+.roundStarter {
+  color: var(--gold);
+  font-size: 0.76rem;
+  font-weight: 700;
+  border: 1px solid rgba(232, 163, 40, 0.35);
+  background: rgba(232, 163, 40, 0.1);
+  border-radius: 999px;
+  padding: 2px 8px;
+  white-space: nowrap;
 }
 
 .roundHint {
