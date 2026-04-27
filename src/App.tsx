@@ -199,6 +199,10 @@ export default function App() {
       <main className="main">
         {Array.from({ length: state.roundCount }, (_, i) => i + 1).map((r) => {
           const info = roundInfo[r];
+          const playerCount = state.players.length;
+          // 플레이어 순서를 기준으로 라운드별 선플레이어를 순환 계산합니다.
+          const starter =
+            playerCount > 0 ? state.players[(r - 1) % playerCount] : null;
           const hintClass = info.complete
             ? info.total >= 0
               ? 'roundHintPos'
@@ -218,6 +222,7 @@ export default function App() {
                 <div className="roundSummaryLeft">
                   <span className="roundChevron">▼</span>
                   <span className="roundNum">라운드 {r}</span>
+                  {starter && <span className="roundHint">선: {starter.name}</span>}
                   {info.complete && <span className="roundDone">✓</span>}
                 </div>
                 <span className={`roundHint ${hintClass}`}>{hintText}</span>
