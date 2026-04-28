@@ -271,19 +271,34 @@ function PlayerCard({ player, round, state, onPatch }: CardProps) {
             <div className="cardDivider" />
 
             {isBidZeroOrNull ? (
-              <div className="inlineLootRow">
-                <span className="inlineLootLabel">
-                  동맹 보너스
-                  <small>+20pt</small>
-                </span>
-                <label className="toggleSwitch" style={{ flex: 'none' }}>
-                  <input
-                    className="toggleTrack"
-                    type="checkbox"
-                    checked={cell.lootAlliances > 0}
-                    onChange={(e) => onPatch({ lootAlliances: e.target.checked ? 1 : 0 })}
-                  />
-                </label>
+              <div className="bonusGrid">
+                <div className="inlineLootRow">
+                  <span className="inlineLootLabel">
+                    동맹 보너스
+                    <small>+20pt</small>
+                  </span>
+                  <label className="toggleSwitch" style={{ flex: 'none' }}>
+                    <input
+                      className="toggleTrack"
+                      type="checkbox"
+                      checked={cell.lootAlliances > 0}
+                      onChange={(e) => onPatch({ lootAlliances: e.target.checked ? 1 : 0 })}
+                    />
+                  </label>
+                </div>
+                <div className="bonusRow">
+                  <span className="bonusRowLabel">
+                    데이빗 존스 → 해양생물
+                    <small>+20점 × 수</small>
+                  </span>
+                  <div className="bonusRowStepper">
+                    <Stepper
+                      value={cell.davyJonesMarineCount}
+                      max={8}
+                      onChange={(v) => onPatch({ davyJonesMarineCount: v ?? 0 })}
+                    />
+                  </div>
+                </div>
               </div>
             ) : (
               <>
