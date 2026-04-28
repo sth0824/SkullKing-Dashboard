@@ -229,8 +229,6 @@ function PlayerCard({ player, round, state, onPatch }: CardProps) {
     cell.mermaidCatchesSkullKing ||
     cell.piratesCatchMermaids > 0 ||
     cell.skullKingPiratesCaught > 0 ||
-    cell.standard14sCaptured > 0 ||
-    cell.black14sCaptured > 0 ||
     cell.lootAlliances > 0 ||
     cell.rascalWager > 0;
 
@@ -331,6 +329,23 @@ function PlayerCard({ player, round, state, onPatch }: CardProps) {
                   </div>
                 </div>
 
+                {/* 동맹 보너스 */}
+                <div className="bonusRow">
+                  <label className={`toggleSwitch${bonusDisabled ? ' toggleSwitch--disabled' : ''}`}>
+                    <input
+                      className="toggleTrack"
+                      type="checkbox"
+                      checked={cell.lootAlliances > 0}
+                      disabled={bonusDisabled}
+                      onChange={(e) => onPatch({ lootAlliances: e.target.checked ? 1 : 0 })}
+                    />
+                    <span className={`bonusRowLabel${bonusDisabled ? ' bonusRowLabel--disabled' : ''}`}>
+                      동맹 보너스
+                      <small>+20pt</small>
+                    </span>
+                  </label>
+                </div>
+
                 {/* 1등 항해사 */}
                 <div className="bonusRow">
                   <label className={`toggleSwitch${bonusDisabled ? ' toggleSwitch--disabled' : ''}`}>
@@ -348,22 +363,6 @@ function PlayerCard({ player, round, state, onPatch }: CardProps) {
                   </label>
                 </div>
 
-                {/* 데이빗 존스 */}
-                <div className="bonusRow">
-                  <span className={`bonusRowLabel${bonusDisabled ? ' bonusRowLabel--disabled' : ''}`}>
-                    데이빗 존스 → 해양생물
-                    <small>+20점 × 수</small>
-                  </span>
-                  <div className="bonusRowStepper">
-                    <Stepper
-                      value={cell.davyJonesMarineCount}
-                      max={8}
-                      disabled={bonusDisabled}
-                      onChange={(v) => onPatch({ davyJonesMarineCount: v ?? 0 })}
-                    />
-                  </div>
-                </div>
-
                 {/* Mermaid → Skull King */}
                 <div className="bonusRow">
                   <label className={`toggleSwitch${bonusDisabled ? ' toggleSwitch--disabled' : ''}`}>
@@ -377,6 +376,23 @@ function PlayerCard({ player, round, state, onPatch }: CardProps) {
                     <span className={`bonusRowLabel${bonusDisabled ? ' bonusRowLabel--disabled' : ''}`}>
                       인어 → 스컬킹
                       <small>+40점</small>
+                    </span>
+                  </label>
+                </div>
+
+                {/* Skull King → Pirates */}
+                <div className="bonusRow">
+                  <label className={`toggleSwitch${bonusDisabled ? ' toggleSwitch--disabled' : ''}`}>
+                    <input
+                      className="toggleTrack"
+                      type="checkbox"
+                      checked={cell.skullKingPiratesCaught > 0}
+                      disabled={bonusDisabled}
+                      onChange={(e) => onPatch({ skullKingPiratesCaught: e.target.checked ? 1 : 0 })}
+                    />
+                    <span className={`bonusRowLabel${bonusDisabled ? ' bonusRowLabel--disabled' : ''}`}>
+                      스컬킹 → 해적
+                      <small>+30점</small>
                     </span>
                   </label>
                 </div>
@@ -397,74 +413,26 @@ function PlayerCard({ player, round, state, onPatch }: CardProps) {
                   </div>
                 </div>
 
-                {/* Skull King → Pirates */}
+                {/* 데이빗 존스 */}
                 <div className="bonusRow">
                   <span className={`bonusRowLabel${bonusDisabled ? ' bonusRowLabel--disabled' : ''}`}>
-                    스컬킹 → 해적
-                    <small>+30점 × 수 (최대 6)</small>
+                    데이빗 존스 → 해양생물
+                    <small>+20점 × 수</small>
                   </span>
                   <div className="bonusRowStepper">
                     <Stepper
-                      value={cell.skullKingPiratesCaught}
-                      max={6}
+                      value={cell.davyJonesMarineCount}
+                      max={8}
                       disabled={bonusDisabled}
-                      onChange={(v) => onPatch({ skullKingPiratesCaught: v ?? 0 })}
+                      onChange={(v) => onPatch({ davyJonesMarineCount: v ?? 0 })}
                     />
                   </div>
-                </div>
-
-                {/* Standard 14s */}
-                <div className="bonusRow">
-                  <span className={`bonusRowLabel${bonusDisabled ? ' bonusRowLabel--disabled' : ''}`}>
-                    일반 14 카드
-                    <small>+10점 × 수 (노랑·보라·초록)</small>
-                  </span>
-                  <div className="bonusRowStepper">
-                    <Stepper
-                      value={cell.standard14sCaptured}
-                      max={3}
-                      disabled={bonusDisabled}
-                      onChange={(v) => onPatch({ standard14sCaptured: v ?? 0 })}
-                    />
-                  </div>
-                </div>
-
-                {/* Black 14 */}
-                <div className="bonusRow">
-                  <span className={`bonusRowLabel${bonusDisabled ? ' bonusRowLabel--disabled' : ''}`}>
-                    검정 14 카드
-                    <small>+20점 (졸리 로저)</small>
-                  </span>
-                  <div className="bonusRowStepper">
-                    <Stepper
-                      value={cell.black14sCaptured}
-                      max={1}
-                      disabled={bonusDisabled}
-                      onChange={(v) => onPatch({ black14sCaptured: v ?? 0 })}
-                    />
-                  </div>
-                </div>
-
-                {/* 동맹 보너스 — 체크하면 +20pt */}
-                <div className="bonusRow">
-                  <label className="toggleSwitch">
-                    <input
-                      className="toggleTrack"
-                      type="checkbox"
-                      checked={cell.lootAlliances > 0}
-                      onChange={(e) => onPatch({ lootAlliances: e.target.checked ? 1 : 0 })}
-                    />
-                    <span className="bonusRowLabel">
-                      동맹 보너스
-                      <small>+20pt</small>
-                    </span>
-                  </label>
                 </div>
 
                 {/* Rascal Wager — segment picker */}
                 <div className="bonusRow bonusRow--col">
                   <span className={`bonusRowLabel${bonusDisabled ? ' bonusRowLabel--disabled' : ''}`}>
-                    Rascal Wager
+                    라스칼 배팅
                     <small>입찰 성공 시 +, 실패 시 − 자동 반영</small>
                   </span>
                   <RascalPicker

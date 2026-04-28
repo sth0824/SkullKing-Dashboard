@@ -43,8 +43,8 @@ export function GuideModal({ open, onClose }: Props) {
                 점수 계산에만 반영됩니다.
               </li>
               <li>
-                <strong>확장 보너스</strong>를 펼쳐 카드 보너스·Rascal·추가 점수 등을 넣습니다. 1 이상
-                입찰에 성공한 라운드에만 보너스가 더해집니다.
+                <strong>확장 보너스</strong>를 펼쳐 추가/차감 점수, 동맹 보너스, 카드 보너스,
+                라스칼 배팅을 넣습니다. 1 이상 입찰에 성공한 라운드에만 보너스가 더해집니다.
               </li>
               <li>
                 라운드에 <strong>크라켄</strong>이 있었다면 체크해 두면, 실제 트릭 합 검증 경고를

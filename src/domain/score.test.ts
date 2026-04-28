@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
   BONUS_FIRST_MATE_CAPTURE,
-  BONUS_PER_BLACK_14,
   BONUS_PER_DAVY_JONES_MARINE,
   BONUS_PER_LOOT_ALLIANCE,
   BONUS_PER_MERMAID_CAUGHT_BY_PIRATE,
@@ -65,23 +64,21 @@ describe('calcRoundPoints', () => {
     );
   });
 
-  it('확장 보너스(해적→인어, 14, Loot) 합산', () => {
+  it('확장 보너스(해적→인어, 스컬킹→해적, Loot) 합산', () => {
     const r = calcRoundPoints(
       6,
       base({
         bid: 3,
         taken: 3,
         piratesCatchMermaids: 1,
-        standard14sCaptured: 2,
-        black14sCaptured: 1,
+        skullKingPiratesCaught: 1,
         lootAlliances: 1
       })
     );
     expect(r.total).toBe(
       3 * 20 +
         BONUS_PER_MERMAID_CAUGHT_BY_PIRATE +
-        2 * 10 +
-        BONUS_PER_BLACK_14 +
+        BONUS_PER_PIRATE_CAUGHT +
         BONUS_PER_LOOT_ALLIANCE
     );
   });
