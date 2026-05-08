@@ -275,16 +275,15 @@ function PlayerCard({ player, round, state, onPatch }: CardProps) {
                 <div className="inlineLootRow">
                   <span className="inlineLootLabel">
                     동맹 보너스
-                    <small>+20pt</small>
+                    <small>+20점 × 수 (최대 2)</small>
                   </span>
-                  <label className="toggleSwitch" style={{ flex: 'none' }}>
-                    <input
-                      className="toggleTrack"
-                      type="checkbox"
-                      checked={cell.lootAlliances > 0}
-                      onChange={(e) => onPatch({ lootAlliances: e.target.checked ? 1 : 0 })}
+                  <div className="bonusRowStepper">
+                    <Stepper
+                      value={cell.lootAlliances}
+                      max={2}
+                      onChange={(v) => onPatch({ lootAlliances: v ?? 0 })}
                     />
-                  </label>
+                  </div>
                 </div>
                 <div className="bonusRow">
                   <span className="bonusRowLabel">
@@ -344,23 +343,6 @@ function PlayerCard({ player, round, state, onPatch }: CardProps) {
                   </div>
                 </div>
 
-                {/* 동맹 보너스 */}
-                <div className="bonusRow">
-                  <label className={`toggleSwitch${bonusDisabled ? ' toggleSwitch--disabled' : ''}`}>
-                    <input
-                      className="toggleTrack"
-                      type="checkbox"
-                      checked={cell.lootAlliances > 0}
-                      disabled={bonusDisabled}
-                      onChange={(e) => onPatch({ lootAlliances: e.target.checked ? 1 : 0 })}
-                    />
-                    <span className={`bonusRowLabel${bonusDisabled ? ' bonusRowLabel--disabled' : ''}`}>
-                      동맹 보너스
-                      <small>+20pt</small>
-                    </span>
-                  </label>
-                </div>
-
                 {/* 1등 항해사 */}
                 <div className="bonusRow">
                   <label className={`toggleSwitch${bonusDisabled ? ' toggleSwitch--disabled' : ''}`}>
@@ -410,6 +392,22 @@ function PlayerCard({ player, round, state, onPatch }: CardProps) {
                       <small>+30점</small>
                     </span>
                   </label>
+                </div>
+
+                {/* 동맹 보너스 */}
+                <div className="bonusRow">
+                  <span className={`bonusRowLabel${bonusDisabled ? ' bonusRowLabel--disabled' : ''}`}>
+                    동맹 보너스
+                    <small>+20점 × 수 (최대 2)</small>
+                  </span>
+                  <div className="bonusRowStepper">
+                    <Stepper
+                      value={cell.lootAlliances}
+                      max={2}
+                      disabled={bonusDisabled}
+                      onChange={(v) => onPatch({ lootAlliances: v ?? 0 })}
+                    />
+                  </div>
                 </div>
 
                 {/* Pirates → Mermaids */}

@@ -83,6 +83,18 @@ describe('calcRoundPoints', () => {
     );
   });
 
+  it('동맹 보너스는 최대 2회까지 합산', () => {
+    const r = calcRoundPoints(
+      5,
+      base({
+        bid: 2,
+        taken: 2,
+        lootAlliances: 3
+      })
+    );
+    expect(r.total).toBe(2 * 20 + 2 * BONUS_PER_LOOT_ALLIANCE);
+  });
+
   it('Rascal wager는 성공 시 가산', () => {
     const r = calcRoundPoints(4, base({ bid: 1, taken: 1, rascalWager: 20 }));
     expect(r.total).toBe(40);

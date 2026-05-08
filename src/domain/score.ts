@@ -107,7 +107,8 @@ export function calcRoundPoints(
   if (bid === 0) {
     // 0트릭 입찰: 성공 시 동맹 보너스만 추가로 합산합니다
     if (takenEff === 0) {
-      const bonusLoot = Math.max(0, input.lootAlliances) * BONUS_PER_LOOT_ALLIANCE;
+      const lootAllianceCount = Math.min(2, Math.max(0, input.lootAlliances));
+      const bonusLoot = lootAllianceCount * BONUS_PER_LOOT_ALLIANCE;
       return {
         total: roundNumber * ZERO_BID_MULTIPLIER + bonusLoot,
         baseRule: 'zero',
@@ -137,7 +138,8 @@ export function calcRoundPoints(
     const bonusPirates = Math.max(0, input.skullKingPiratesCaught) * BONUS_PER_PIRATE_CAUGHT;
     const bonusStandard14 = Math.max(0, input.standard14sCaptured) * BONUS_PER_STANDARD_14;
     const bonusBlack14 = Math.max(0, input.black14sCaptured) * BONUS_PER_BLACK_14;
-    const bonusLoot = Math.max(0, input.lootAlliances) * BONUS_PER_LOOT_ALLIANCE;
+    const lootAllianceCount = Math.min(2, Math.max(0, input.lootAlliances));
+    const bonusLoot = lootAllianceCount * BONUS_PER_LOOT_ALLIANCE;
     const rascal = Math.max(0, input.rascalWager);
     return {
       total:
